@@ -137,9 +137,6 @@ func (l *Logger) WithContext(ctx context.Context) *logrus.Entry {
 	if userID := ctx.Value("user_id"); userID != nil {
 		entry = entry.WithField("user_id", userID)
 	}
-	if tenantID := ctx.Value("tenant_id"); tenantID != nil {
-		entry = entry.WithField("tenant_id", tenantID)
-	}
 
 	// Add service information
 	entry = entry.WithFields(logrus.Fields{
