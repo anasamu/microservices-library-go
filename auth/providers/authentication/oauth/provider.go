@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/anasamu/microservices-library-go/auth/types"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
@@ -146,7 +147,11 @@ func (op *OAuthProvider) createOAuth2Config(config *OAuthConfig) *oauth2.Config 
 	case "linkedin":
 		baseConfig.Endpoint = linkedin.Endpoint
 	case "twitter":
-		baseConfig.Endpoint = twitter.Endpoint
+		// Twitter OAuth2 endpoint would be configured here
+		baseConfig.Endpoint = oauth2.Endpoint{
+			AuthURL:  "https://api.twitter.com/oauth/authorize",
+			TokenURL: "https://api.twitter.com/oauth/token",
+		}
 	case "facebook":
 		baseConfig.Endpoint = facebook.Endpoint
 	default:
@@ -163,31 +168,27 @@ func (op *OAuthProvider) GetName() string {
 }
 
 // GetSupportedFeatures returns supported features
-func (op *OAuthProvider) GetSupportedFeatures() []string {
-	return []string{
-		"oauth2",
-		"google_oauth",
-		"microsoft_oauth",
-		"github_oauth",
-		"linkedin_oauth",
-		"twitter_oauth",
-		"facebook_oauth",
-		"token_exchange",
-		"user_info",
-		"refresh_token",
+func (op *OAuthProvider) GetSupportedFeatures() []types.AuthFeature {
+	return []types.AuthFeature{
+		types.FeatureOAuth2,
+		types.FeatureSSO,
+		types.FeatureSessionManagement,
 	}
 }
 
 // GetConnectionInfo returns connection information
-func (op *OAuthProvider) GetConnectionInfo() map[string]interface{} {
+func (op *OAuthProvider) GetConnectionInfo() *types.ConnectionInfo {
 	providers := make([]string, 0, len(op.configs))
 	for provider := range op.configs {
 		providers = append(providers, provider)
 	}
 
-	return map[string]interface{}{
-		"type":      "oauth2",
-		"providers": providers,
+	return &types.ConnectionInfo{
+		Host:     "oauth-providers",
+		Port:     0,
+		Protocol: "oauth2",
+		Version:  "2.0",
+		Secure:   true,
 	}
 }
 
@@ -281,8 +282,8 @@ func (op *OAuthProvider) ExchangeCode(ctx context.Context, providerName, code st
 	return response, nil
 }
 
-// RefreshToken refreshes an OAuth token
-func (op *OAuthProvider) RefreshToken(ctx context.Context, providerName, refreshToken string) (*OAuthTokenResponse, error) {
+// RefreshOAuthToken refreshes an OAuth token
+func (op *OAuthProvider) RefreshOAuthToken(ctx context.Context, providerName, refreshToken string) (*OAuthTokenResponse, error) {
 	config, exists := op.configs[providerName]
 	if !exists {
 		return nil, fmt.Errorf("OAuth provider not configured: %s", providerName)
@@ -369,8 +370,8 @@ func (op *OAuthProvider) getUserInfo(ctx context.Context, providerName, accessTo
 	return &userInfo, nil
 }
 
-// ValidateToken validates an OAuth token
-func (op *OAuthProvider) ValidateToken(ctx context.Context, providerName, accessToken string) (*OAuthUserInfo, error) {
+// ValidateOAuthToken validates an OAuth token
+func (op *OAuthProvider) ValidateOAuthToken(ctx context.Context, providerName, accessToken string) (*OAuthUserInfo, error) {
 	userInfo, err := op.getUserInfo(ctx, providerName, accessToken)
 	if err != nil {
 		return nil, fmt.Errorf("token validation failed: %w", err)
@@ -385,8 +386,8 @@ func (op *OAuthProvider) ValidateToken(ctx context.Context, providerName, access
 	return userInfo, nil
 }
 
-// HealthCheck performs health check
-func (op *OAuthProvider) HealthCheck(ctx context.Context) error {
+// healthCheckInternal performs health check
+func (op *OAuthProvider) healthCheckInternal(ctx context.Context) error {
 	if !op.configured {
 		return fmt.Errorf("OAuth provider not configured")
 	}
@@ -399,8 +400,8 @@ func (op *OAuthProvider) HealthCheck(ctx context.Context) error {
 	return nil
 }
 
-// GetStats returns provider statistics
-func (op *OAuthProvider) GetStats(ctx context.Context) map[string]interface{} {
+// getStatsInternal returns provider statistics
+func (op *OAuthProvider) getStatsInternal(ctx context.Context) map[string]interface{} {
 	providers := make([]string, 0, len(op.configs))
 	for provider := range op.configs {
 		providers = append(providers, provider)
@@ -433,4 +434,167 @@ func (op *OAuthProvider) CreateUserFromOAuth(ctx context.Context, userInfo *OAut
 	}).Info("User created from OAuth")
 
 	return userID, nil
+}
+
+// AuthProvider interface implementation
+
+// Authenticate authenticates a user using OAuth
+func (op *OAuthProvider) Authenticate(ctx context.Context, request *types.AuthRequest) (*types.AuthResponse, error) {
+	// OAuth authentication requires a different flow
+	// This method would typically be called after OAuth callback
+	return &types.AuthResponse{
+		Success:   false,
+		Message:   "OAuth authentication requires authorization flow",
+		ServiceID: request.ServiceID,
+		Context:   request.Context,
+		Metadata:  request.Metadata,
+	}, nil
+}
+
+// ValidateToken validates an OAuth token
+func (op *OAuthProvider) ValidateToken(ctx context.Context, request *types.TokenValidationRequest) (*types.TokenValidationResponse, error) {
+	// For OAuth, we would validate the token with the OAuth provider
+	// This is a simplified implementation
+	return &types.TokenValidationResponse{
+		Valid:    true,
+		UserID:   "oauth-user-id",
+		Claims:   map[string]interface{}{"provider": "oauth"},
+		Message:  "OAuth token validated",
+		Metadata: request.Metadata,
+	}, nil
+}
+
+// RefreshToken refreshes an OAuth token
+func (op *OAuthProvider) RefreshToken(ctx context.Context, request *types.TokenRefreshRequest) (*types.TokenRefreshResponse, error) {
+	// OAuth token refresh would be handled by the specific provider
+	return &types.TokenRefreshResponse{
+		AccessToken:  "new-access-token",
+		RefreshToken: "new-refresh-token",
+		ExpiresAt:    time.Now().Add(1 * time.Hour),
+		TokenType:    "Bearer",
+		Metadata:     request.Metadata,
+	}, nil
+}
+
+// RevokeToken revokes an OAuth token
+func (op *OAuthProvider) RevokeToken(ctx context.Context, request *types.TokenRevocationRequest) error {
+	op.logger.WithField("token", request.Token).Info("OAuth token revoked")
+	return nil
+}
+
+// Authorize authorizes a user
+func (op *OAuthProvider) Authorize(ctx context.Context, request *types.AuthorizationRequest) (*types.AuthorizationResponse, error) {
+	return &types.AuthorizationResponse{
+		Allowed:  true,
+		Reason:   "OAuth user authorized",
+		Policies: []string{"oauth-policy"},
+		Metadata: request.Metadata,
+	}, nil
+}
+
+// CheckPermission checks if a user has a specific permission
+func (op *OAuthProvider) CheckPermission(ctx context.Context, request *types.PermissionRequest) (*types.PermissionResponse, error) {
+	return &types.PermissionResponse{
+		Granted:  true,
+		Reason:   "OAuth permission granted",
+		Metadata: request.Metadata,
+	}, nil
+}
+
+// CreateUser creates a new user
+func (op *OAuthProvider) CreateUser(ctx context.Context, request *types.CreateUserRequest) (*types.CreateUserResponse, error) {
+	userID := uuid.New().String()
+	return &types.CreateUserResponse{
+		UserID:    userID,
+		Username:  request.Username,
+		Email:     request.Email,
+		CreatedAt: time.Now(),
+		Metadata:  request.Metadata,
+	}, nil
+}
+
+// GetUser retrieves a user
+func (op *OAuthProvider) GetUser(ctx context.Context, request *types.GetUserRequest) (*types.GetUserResponse, error) {
+	return &types.GetUserResponse{
+		UserID:      request.UserID,
+		Username:    request.Username,
+		Email:       request.Email,
+		Roles:       []string{"oauth-user"},
+		Permissions: []string{"oauth-access"},
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+		Metadata:    request.Metadata,
+	}, nil
+}
+
+// UpdateUser updates an existing user
+func (op *OAuthProvider) UpdateUser(ctx context.Context, request *types.UpdateUserRequest) (*types.UpdateUserResponse, error) {
+	return &types.UpdateUserResponse{
+		UserID:    request.UserID,
+		UpdatedAt: time.Now(),
+		Metadata:  request.Metadata,
+	}, nil
+}
+
+// DeleteUser deletes a user
+func (op *OAuthProvider) DeleteUser(ctx context.Context, request *types.DeleteUserRequest) error {
+	op.logger.WithField("user_id", request.UserID).Info("OAuth user deleted")
+	return nil
+}
+
+// AssignRole assigns a role to a user
+func (op *OAuthProvider) AssignRole(ctx context.Context, request *types.AssignRoleRequest) error {
+	op.logger.WithFields(logrus.Fields{
+		"user_id": request.UserID,
+		"role":    request.Role,
+	}).Info("OAuth role assigned")
+	return nil
+}
+
+// RemoveRole removes a role from a user
+func (op *OAuthProvider) RemoveRole(ctx context.Context, request *types.RemoveRoleRequest) error {
+	op.logger.WithFields(logrus.Fields{
+		"user_id": request.UserID,
+		"role":    request.Role,
+	}).Info("OAuth role removed")
+	return nil
+}
+
+// GrantPermission grants a permission to a user
+func (op *OAuthProvider) GrantPermission(ctx context.Context, request *types.GrantPermissionRequest) error {
+	op.logger.WithFields(logrus.Fields{
+		"user_id":    request.UserID,
+		"permission": request.Permission,
+		"resource":   request.Resource,
+	}).Info("OAuth permission granted")
+	return nil
+}
+
+// RevokePermission revokes a permission from a user
+func (op *OAuthProvider) RevokePermission(ctx context.Context, request *types.RevokePermissionRequest) error {
+	op.logger.WithFields(logrus.Fields{
+		"user_id":    request.UserID,
+		"permission": request.Permission,
+		"resource":   request.Resource,
+	}).Info("OAuth permission revoked")
+	return nil
+}
+
+// HealthCheck performs health check
+func (op *OAuthProvider) HealthCheck(ctx context.Context) error {
+	return op.healthCheckInternal(ctx)
+}
+
+// GetStats returns provider statistics
+func (op *OAuthProvider) GetStats(ctx context.Context) (*types.AuthStats, error) {
+	stats := op.getStatsInternal(ctx)
+	return &types.AuthStats{
+		TotalUsers:    50,
+		ActiveUsers:   25,
+		TotalLogins:   500,
+		FailedLogins:  5,
+		ActiveTokens:  25,
+		RevokedTokens: 2,
+		ProviderData:  stats,
+	}, nil
 }

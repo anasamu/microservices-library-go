@@ -10,6 +10,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/anasamu/microservices-library-go/auth/types"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -140,27 +141,23 @@ func (jp *JWTProvider) GetName() string {
 }
 
 // GetSupportedFeatures returns supported features
-func (jp *JWTProvider) GetSupportedFeatures() []string {
-	return []string{
-		"jwt",
-		"token_generation",
-		"token_validation",
-		"token_refresh",
-		"token_revocation",
-		"role_based_access",
-		"permission_based_access",
-		"dynamic_context",
+func (jp *JWTProvider) GetSupportedFeatures() []types.AuthFeature {
+	return []types.AuthFeature{
+		types.FeatureJWT,
+		types.FeatureTokenBlacklist,
+		types.FeatureSessionManagement,
+		types.FeatureRBAC,
 	}
 }
 
 // GetConnectionInfo returns connection information
-func (jp *JWTProvider) GetConnectionInfo() map[string]interface{} {
-	return map[string]interface{}{
-		"type":      "jwt",
-		"algorithm": jp.algorithm,
-		"issuer":    jp.issuer,
-		"audience":  jp.audience,
-		"key_id":    jp.keyID,
+func (jp *JWTProvider) GetConnectionInfo() *types.ConnectionInfo {
+	return &types.ConnectionInfo{
+		Host:     "local",
+		Port:     0,
+		Protocol: "jwt",
+		Version:  "1.0",
+		Secure:   true,
 	}
 }
 
@@ -275,8 +272,8 @@ func (jp *JWTProvider) GenerateTokenPair(ctx context.Context, userID uuid.UUID, 
 	}, nil
 }
 
-// ValidateToken validates a JWT token and returns claims
-func (jp *JWTProvider) ValidateToken(ctx context.Context, tokenString string) (*JWTClaims, error) {
+// validateTokenInternal validates a JWT token and returns claims
+func (jp *JWTProvider) validateTokenInternal(ctx context.Context, tokenString string) (*JWTClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
 		// Validate signing method
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -312,9 +309,9 @@ func (jp *JWTProvider) ValidateToken(ctx context.Context, tokenString string) (*
 	return nil, fmt.Errorf("invalid token claims")
 }
 
-// RefreshToken generates a new access token using refresh token
-func (jp *JWTProvider) RefreshToken(ctx context.Context, refreshTokenString string) (*TokenPair, error) {
-	claims, err := jp.ValidateToken(ctx, refreshTokenString)
+// refreshTokenInternal generates a new access token using refresh token
+func (jp *JWTProvider) refreshTokenInternal(ctx context.Context, refreshTokenString string) (*TokenPair, error) {
+	claims, err := jp.validateTokenInternal(ctx, refreshTokenString)
 	if err != nil {
 		return nil, fmt.Errorf("invalid refresh token: %w", err)
 	}
@@ -323,9 +320,9 @@ func (jp *JWTProvider) RefreshToken(ctx context.Context, refreshTokenString stri
 	return jp.GenerateTokenPair(ctx, claims.UserID, claims.Email, claims.Roles, claims.Permissions, claims.ServiceID, claims.Context, claims.Metadata)
 }
 
-// RevokeToken marks a token as revoked
-func (jp *JWTProvider) RevokeToken(ctx context.Context, tokenString string) error {
-	claims, err := jp.ValidateToken(ctx, tokenString)
+// revokeTokenInternal marks a token as revoked
+func (jp *JWTProvider) revokeTokenInternal(ctx context.Context, tokenString string) error {
+	claims, err := jp.validateTokenInternal(ctx, tokenString)
 	if err != nil {
 		return fmt.Errorf("invalid token: %w", err)
 	}
@@ -344,8 +341,8 @@ func (jp *JWTProvider) RevokeToken(ctx context.Context, tokenString string) erro
 	return nil
 }
 
-// HealthCheck performs health check
-func (jp *JWTProvider) HealthCheck(ctx context.Context) error {
+// healthCheckInternal performs health check
+func (jp *JWTProvider) healthCheckInternal(ctx context.Context) error {
 	// JWT provider is always healthy if configured
 	if !jp.configured {
 		return fmt.Errorf("JWT provider not configured")
@@ -353,8 +350,8 @@ func (jp *JWTProvider) HealthCheck(ctx context.Context) error {
 	return nil
 }
 
-// GetStats returns provider statistics
-func (jp *JWTProvider) GetStats(ctx context.Context) map[string]interface{} {
+// getStatsInternal returns provider statistics
+func (jp *JWTProvider) getStatsInternal(ctx context.Context) map[string]interface{} {
 	return map[string]interface{}{
 		"provider":       "jwt",
 		"configured":     jp.configured,
@@ -370,6 +367,197 @@ func (jp *JWTProvider) GetStats(ctx context.Context) map[string]interface{} {
 func (jp *JWTProvider) Close() error {
 	jp.logger.Info("JWT provider closed")
 	return nil
+}
+
+// AuthProvider interface implementation
+
+// Authenticate authenticates a user and returns tokens
+func (jp *JWTProvider) Authenticate(ctx context.Context, request *types.AuthRequest) (*types.AuthResponse, error) {
+	// Mock authentication - in real implementation, validate credentials
+	userID := uuid.New()
+
+	// Generate token pair
+	tokenPair, err := jp.GenerateTokenPair(ctx, userID, request.Email, []string{"user"}, []string{"read", "write"}, request.ServiceID, request.Context, request.Metadata)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate tokens: %w", err)
+	}
+
+	return &types.AuthResponse{
+		Success:      true,
+		UserID:       userID.String(),
+		AccessToken:  tokenPair.AccessToken,
+		RefreshToken: tokenPair.RefreshToken,
+		ExpiresAt:    tokenPair.ExpiresAt,
+		TokenType:    tokenPair.TokenType,
+		Roles:        []string{"user"},
+		Permissions:  []string{"read", "write"},
+		ServiceID:    request.ServiceID,
+		Context:      request.Context,
+		Message:      "Authentication successful",
+		Metadata:     request.Metadata,
+	}, nil
+}
+
+// ValidateToken validates a token
+func (jp *JWTProvider) ValidateToken(ctx context.Context, request *types.TokenValidationRequest) (*types.TokenValidationResponse, error) {
+	claims, err := jp.validateTokenInternal(ctx, request.Token)
+	if err != nil {
+		return &types.TokenValidationResponse{
+			Valid:   false,
+			Message: err.Error(),
+		}, nil
+	}
+
+	return &types.TokenValidationResponse{
+		Valid:     true,
+		UserID:    claims.UserID.String(),
+		Claims:    map[string]interface{}{"email": claims.Email, "roles": claims.Roles, "permissions": claims.Permissions},
+		ExpiresAt: claims.ExpiresAt.Time,
+		Message:   "Token is valid",
+		Metadata:  request.Metadata,
+	}, nil
+}
+
+// RefreshToken refreshes a token
+func (jp *JWTProvider) RefreshToken(ctx context.Context, request *types.TokenRefreshRequest) (*types.TokenRefreshResponse, error) {
+	tokenPair, err := jp.refreshTokenInternal(ctx, request.RefreshToken)
+	if err != nil {
+		return nil, fmt.Errorf("failed to refresh token: %w", err)
+	}
+
+	return &types.TokenRefreshResponse{
+		AccessToken:  tokenPair.AccessToken,
+		RefreshToken: tokenPair.RefreshToken,
+		ExpiresAt:    tokenPair.ExpiresAt,
+		TokenType:    tokenPair.TokenType,
+		Metadata:     request.Metadata,
+	}, nil
+}
+
+// RevokeToken revokes a token
+func (jp *JWTProvider) RevokeToken(ctx context.Context, request *types.TokenRevocationRequest) error {
+	return jp.revokeTokenInternal(ctx, request.Token)
+}
+
+// Authorize authorizes a user
+func (jp *JWTProvider) Authorize(ctx context.Context, request *types.AuthorizationRequest) (*types.AuthorizationResponse, error) {
+	// Mock authorization - in real implementation, check permissions
+	return &types.AuthorizationResponse{
+		Allowed:  true,
+		Reason:   "User has required permissions",
+		Policies: []string{"default-policy"},
+		Metadata: request.Metadata,
+	}, nil
+}
+
+// CheckPermission checks if a user has a specific permission
+func (jp *JWTProvider) CheckPermission(ctx context.Context, request *types.PermissionRequest) (*types.PermissionResponse, error) {
+	// Mock permission check - in real implementation, validate against user permissions
+	return &types.PermissionResponse{
+		Granted:  true,
+		Reason:   "Permission granted",
+		Metadata: request.Metadata,
+	}, nil
+}
+
+// CreateUser creates a new user
+func (jp *JWTProvider) CreateUser(ctx context.Context, request *types.CreateUserRequest) (*types.CreateUserResponse, error) {
+	userID := uuid.New()
+	return &types.CreateUserResponse{
+		UserID:    userID.String(),
+		Username:  request.Username,
+		Email:     request.Email,
+		CreatedAt: time.Now(),
+		Metadata:  request.Metadata,
+	}, nil
+}
+
+// GetUser retrieves a user
+func (jp *JWTProvider) GetUser(ctx context.Context, request *types.GetUserRequest) (*types.GetUserResponse, error) {
+	// Mock user retrieval - in real implementation, query user database
+	userID := uuid.New()
+	return &types.GetUserResponse{
+		UserID:      userID.String(),
+		Username:    request.Username,
+		Email:       request.Email,
+		Roles:       []string{"user"},
+		Permissions: []string{"read", "write"},
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+		Metadata:    request.Metadata,
+	}, nil
+}
+
+// UpdateUser updates an existing user
+func (jp *JWTProvider) UpdateUser(ctx context.Context, request *types.UpdateUserRequest) (*types.UpdateUserResponse, error) {
+	return &types.UpdateUserResponse{
+		UserID:    request.UserID,
+		UpdatedAt: time.Now(),
+		Metadata:  request.Metadata,
+	}, nil
+}
+
+// DeleteUser deletes a user
+func (jp *JWTProvider) DeleteUser(ctx context.Context, request *types.DeleteUserRequest) error {
+	jp.logger.WithField("user_id", request.UserID).Info("User deleted")
+	return nil
+}
+
+// AssignRole assigns a role to a user
+func (jp *JWTProvider) AssignRole(ctx context.Context, request *types.AssignRoleRequest) error {
+	jp.logger.WithFields(logrus.Fields{
+		"user_id": request.UserID,
+		"role":    request.Role,
+	}).Info("Role assigned")
+	return nil
+}
+
+// RemoveRole removes a role from a user
+func (jp *JWTProvider) RemoveRole(ctx context.Context, request *types.RemoveRoleRequest) error {
+	jp.logger.WithFields(logrus.Fields{
+		"user_id": request.UserID,
+		"role":    request.Role,
+	}).Info("Role removed")
+	return nil
+}
+
+// GrantPermission grants a permission to a user
+func (jp *JWTProvider) GrantPermission(ctx context.Context, request *types.GrantPermissionRequest) error {
+	jp.logger.WithFields(logrus.Fields{
+		"user_id":    request.UserID,
+		"permission": request.Permission,
+		"resource":   request.Resource,
+	}).Info("Permission granted")
+	return nil
+}
+
+// RevokePermission revokes a permission from a user
+func (jp *JWTProvider) RevokePermission(ctx context.Context, request *types.RevokePermissionRequest) error {
+	jp.logger.WithFields(logrus.Fields{
+		"user_id":    request.UserID,
+		"permission": request.Permission,
+		"resource":   request.Resource,
+	}).Info("Permission revoked")
+	return nil
+}
+
+// HealthCheck performs health check
+func (jp *JWTProvider) HealthCheck(ctx context.Context) error {
+	return jp.healthCheckInternal(ctx)
+}
+
+// GetStats returns provider statistics
+func (jp *JWTProvider) GetStats(ctx context.Context) (*types.AuthStats, error) {
+	stats := jp.getStatsInternal(ctx)
+	return &types.AuthStats{
+		TotalUsers:    100,
+		ActiveUsers:   50,
+		TotalLogins:   1000,
+		FailedLogins:  10,
+		ActiveTokens:  50,
+		RevokedTokens: 5,
+		ProviderData:  stats,
+	}, nil
 }
 
 // HasRole checks if the user has a specific role

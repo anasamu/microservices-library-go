@@ -7,12 +7,19 @@ import (
 	"strings"
 	"time"
 
+	"github.com/anasamu/microservices-library-go/auth/types"
 	"github.com/sirupsen/logrus"
 )
 
+// AuthManager interface for dependency injection
+type AuthManager interface {
+	ValidateToken(ctx context.Context, providerName string, request *types.TokenValidationRequest) (*types.TokenValidationResponse, error)
+	Authorize(ctx context.Context, providerName string, request *types.AuthorizationRequest) (*types.AuthorizationResponse, error)
+}
+
 // AuthMiddleware provides HTTP middleware for authentication and authorization
 type AuthMiddleware struct {
-	authManager interface{} // Will be *gateway.AuthManager
+	authManager AuthManager
 	logger      *logrus.Logger
 }
 
@@ -59,7 +66,7 @@ func DefaultMiddlewareConfig() *MiddlewareConfig {
 }
 
 // NewAuthMiddleware creates a new auth middleware
-func NewAuthMiddleware(authManager interface{}, config *MiddlewareConfig, logger *logrus.Logger) *AuthMiddleware {
+func NewAuthMiddleware(authManager AuthManager, config *MiddlewareConfig, logger *logrus.Logger) *AuthMiddleware {
 	if config == nil {
 		config = DefaultMiddlewareConfig()
 	}
@@ -99,9 +106,8 @@ func (am *AuthMiddleware) AuthenticationMiddleware(config *MiddlewareConfig) fun
 				return
 			}
 
-			// Validate token (this would use the auth manager)
-			// For now, we'll create a mock validation
-			userInfo := am.validateToken(token, config.DefaultProvider)
+			// Validate token using the auth manager
+			userInfo := am.validateToken(r.Context(), token, config.DefaultProvider)
 			if userInfo == nil && config.RequireAuth {
 				am.writeErrorResponse(w, http.StatusUnauthorized, "Invalid token")
 				return
@@ -187,18 +193,42 @@ func (am *AuthMiddleware) extractToken(r *http.Request, config *MiddlewareConfig
 	return ""
 }
 
-// validateToken validates a token (mock implementation)
-func (am *AuthMiddleware) validateToken(token, provider string) map[string]interface{} {
-	// This is a mock implementation
-	// In real implementation, you would use the auth manager to validate the token
-	return map[string]interface{}{
-		"user_id":     "mock-user-id",
-		"email":       "user@example.com",
-		"roles":       []string{"user"},
-		"permissions": []string{"read", "write"},
-		"service_id":  "default-service",
-		"context":     map[string]interface{}{},
+// validateToken validates a token using the auth manager
+func (am *AuthMiddleware) validateToken(ctx context.Context, token, provider string) map[string]interface{} {
+	// Use the auth manager to validate the token
+	tokenRequest := &types.TokenValidationRequest{
+		Token:    token,
+		Metadata: map[string]interface{}{"middleware": "auth"},
 	}
+
+	response, err := am.authManager.ValidateToken(ctx, provider, tokenRequest)
+	if err != nil || !response.Valid {
+		am.logger.WithError(err).Debug("Token validation failed")
+		return nil
+	}
+
+	// Extract user info from claims
+	userInfo := map[string]interface{}{
+		"user_id":    response.UserID,
+		"expires_at": response.ExpiresAt,
+		"service_id": "default-service",
+		"context":    map[string]interface{}{},
+	}
+
+	// Add claims to user info
+	if response.Claims != nil {
+		if email, ok := response.Claims["email"].(string); ok {
+			userInfo["email"] = email
+		}
+		if roles, ok := response.Claims["roles"].([]string); ok {
+			userInfo["roles"] = roles
+		}
+		if permissions, ok := response.Claims["permissions"].([]string); ok {
+			userInfo["permissions"] = permissions
+		}
+	}
+
+	return userInfo
 }
 
 // addUserToContext adds user information to request context
