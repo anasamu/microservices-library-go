@@ -8,6 +8,7 @@ import (
 
 	"github.com/anasamu/microservices-library-go/libs/storage/gateway"
 	"github.com/aws/aws-sdk-go-v2/aws"
+	awsv2config "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
@@ -78,9 +79,9 @@ func (p *Provider) Configure(config map[string]interface{}) error {
 	useSSL, _ := config["use_ssl"].(bool)
 
 	// Create AWS config
-	awsConfig, err := config.LoadDefaultConfig(context.TODO(),
-		config.WithRegion(region),
-		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(accessKeyID, secretAccessKey, "")),
+	awsConfig, err := awsv2config.LoadDefaultConfig(context.TODO(),
+		awsv2config.WithRegion(region),
+		awsv2config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(accessKeyID, secretAccessKey, "")),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to load AWS config: %w", err)
