@@ -35,7 +35,7 @@ A comprehensive, modular, and production-ready communication library for Go micr
 ## 📁 Project Structure
 
 ```
-libs/communication/
+communication/
 ├── gateway/                    # Core communication gateway
 │   ├── manager.go             # Communication manager implementation
 │   ├── example.go             # Usage examples
@@ -65,7 +65,7 @@ libs/communication/
 ```bash
 # Clone the repository
 git clone https://github.com/anasamu/microservices-library-go.git
-cd microservices-library-go/libs/communication
+cd microservices-library-go/communication
 
 # Install dependencies
 go mod tidy
@@ -75,13 +75,13 @@ go mod tidy
 
 ```bash
 # For HTTP support
-go get github.com/anasamu/microservices-library-go/libs/communication/providers/http
+go get github.com/anasamu/microservices-library-go/communication/providers/http
 
 # For WebSocket support
-go get github.com/anasamu/microservices-library-go/libs/communication/providers/websocket
+go get github.com/anasamu/microservices-library-go/communication/providers/websocket
 
 # For gRPC support
-go get github.com/anasamu/microservices-library-go/libs/communication/providers/grpc
+go get github.com/anasamu/microservices-library-go/communication/providers/grpc
 ```
 
 ## 📖 Usage Examples
@@ -95,8 +95,8 @@ import (
     "context"
     "log"
     
-    "github.com/anasamu/microservices-library-go/libs/communication/gateway"
-    "github.com/anasamu/microservices-library-go/libs/communication/providers/http"
+    "github.com/anasamu/microservices-library-go/communication/gateway"
+    "github.com/anasamu/microservices-library-go/communication/providers/http"
     "github.com/sirupsen/logrus"
 )
 
