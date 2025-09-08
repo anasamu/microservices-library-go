@@ -1,12 +1,14 @@
-module github.com/anasamu/microservices-library-go/libs/database/providers/postgresql
+module github.com/anasamu/microservices-library-go/database/providers/postgresql
 
 go 1.21
 
 require (
-	github.com/anasamu/microservices-library-go/libs/database/gateway v0.0.0
+	github.com/anasamu/microservices-library-go/database/gateway v0.0.0
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/lib/pq v1.10.9
 	github.com/sirupsen/logrus v1.9.3
 )
 
-replace github.com/anasamu/microservices-library-go/libs/database/gateway => ../../gateway
+require golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8 // indirect
+
+replace github.com/anasamu/microservices-library-go/database/gateway => ../../gateway

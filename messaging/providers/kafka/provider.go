@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/anasamu/microservices-library-go/libs/messaging/gateway"
+	"github.com/anasamu/microservices-library-go/messaging/gateway"
 	"github.com/segmentio/kafka-go"
 	"github.com/sirupsen/logrus"
 )
@@ -519,7 +519,6 @@ func (p *Provider) getOrCreateWriter(topic string) (*kafka.Writer, error) {
 	}
 
 	brokers, _ := p.config["brokers"].([]string)
-	groupID, _ := p.config["group_id"].(string)
 
 	writer := &kafka.Writer{
 		Addr:         kafka.TCP(brokers...),

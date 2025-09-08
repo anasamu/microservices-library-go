@@ -3,11 +3,13 @@ package minio
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"strings"
 
-	"github.com/anasamu/microservices-library-go/libs/storage/gateway"
+	"github.com/anasamu/microservices-library-go/storage/gateway"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
+	"github.com/minio/minio-go/v7/pkg/encrypt"
 	"github.com/sirupsen/logrus"
 )
 
@@ -114,7 +116,7 @@ func (p *Provider) PutObject(ctx context.Context, request *gateway.PutObjectRequ
 
 	// Add server-side encryption
 	if request.Encryption != nil {
-		opts.ServerSideEncryption = minio.NewSSE()
+		opts.ServerSideEncryption = encrypt.NewSSE()
 	}
 
 	// Upload object
@@ -285,12 +287,6 @@ func (p *Provider) ListObjects(ctx context.Context, request *gateway.ListObjects
 	for obj := range objectCh {
 		if obj.Err != nil {
 			return nil, fmt.Errorf("failed to list objects: %w", obj.Err)
-		}
-
-		// Check if it's a common prefix
-		if obj.Key == "" && obj.Prefix != "" {
-			response.CommonPrefixes = append(response.CommonPrefixes, obj.Prefix)
-			continue
 		}
 
 		// Add object info
@@ -469,7 +465,7 @@ func (p *Provider) GeneratePresignedURL(ctx context.Context, request *gateway.Pr
 	}
 
 	// Generate presigned URL based on method
-	var url string
+	var url *url.URL
 	var err error
 
 	switch strings.ToUpper(request.Method) {
@@ -478,7 +474,7 @@ func (p *Provider) GeneratePresignedURL(ctx context.Context, request *gateway.Pr
 	case "PUT":
 		url, err = p.client.PresignedPutObject(ctx, request.Bucket, request.Key, request.Expires)
 	case "DELETE":
-		url, err = p.client.PresignedDeleteObject(ctx, request.Bucket, request.Key, request.Expires)
+		url, err = p.client.Presign(ctx, "DELETE", request.Bucket, request.Key, request.Expires, nil)
 	default:
 		return "", fmt.Errorf("unsupported method: %s", request.Method)
 	}
@@ -576,9 +572,7 @@ func (p *Provider) ListBuckets(ctx context.Context) ([]gateway.BucketInfo, error
 		bucketInfos[i] = gateway.BucketInfo{
 			Name:         bucket.Name,
 			CreationDate: bucket.CreationDate,
-			ProviderData: map[string]interface{}{
-				"region": bucket.Region,
-			},
+			ProviderData: map[string]interface{}{},
 		}
 	}
 

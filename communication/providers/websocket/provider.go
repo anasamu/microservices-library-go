@@ -5,10 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"sync"
 	"time"
 
-	"github.com/anasamu/microservices-library-go/libs/communication/gateway"
+	"github.com/anasamu/microservices-library-go/communication/gateway"
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
 )
@@ -29,6 +30,7 @@ type Provider struct {
 // Client represents a WebSocket client
 type Client struct {
 	conn     *websocket.Conn
+	request  *http.Request
 	send     chan []byte
 	server   *Provider
 	ID       string
@@ -214,7 +216,7 @@ func (p *Provider) HandleWebSocket(ctx context.Context, request *gateway.WebSock
 	// Create a mock HTTP request for the upgrader
 	httpReq := &http.Request{
 		Method: "GET",
-		URL:    &http.URL{Path: request.Path},
+		URL:    &url.URL{Path: request.Path},
 		Header: make(http.Header),
 	}
 
@@ -235,6 +237,7 @@ func (p *Provider) HandleWebSocket(ctx context.Context, request *gateway.WebSock
 	// Create client
 	client := &Client{
 		conn:     conn,
+		request:  httpReq,
 		send:     make(chan []byte, 256),
 		server:   p,
 		ID:       generateClientID(),
@@ -354,7 +357,7 @@ func (p *Provider) GetConnections(ctx context.Context) ([]gateway.ConnectionInfo
 			ID:          client.ID,
 			Type:        "websocket",
 			RemoteAddr:  client.conn.RemoteAddr().String(),
-			UserAgent:   client.conn.Request().UserAgent(),
+			UserAgent:   client.request.UserAgent(),
 			ConnectedAt: time.Now(), // Simplified
 			LastSeen:    time.Now(),
 			UserID:      client.UserID,

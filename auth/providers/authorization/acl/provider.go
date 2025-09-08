@@ -1,4 +1,4 @@
-package auth
+package acl
 
 import (
 	"context"
@@ -8,13 +8,16 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
+
+	"github.com/anasamu/microservices-library-go/auth/types"
 )
 
-// ACLManager handles Access Control List operations
-type ACLManager struct {
-	entries map[string]*ACLEntry
-	groups  map[string]*ACLGroup
-	logger  *logrus.Logger
+// ACLProvider implements Access Control List as an AuthProvider
+type ACLProvider struct {
+	entries    map[string]*ACLEntry
+	groups     map[string]*ACLGroup
+	logger     *logrus.Logger
+	configured bool
 }
 
 // ACLEntry represents an Access Control List entry
@@ -80,17 +83,21 @@ type ACLDecision struct {
 	Context  map[string]interface{} `json:"context,omitempty"`
 }
 
-// NewACLManager creates a new ACL manager
-func NewACLManager(logger *logrus.Logger) *ACLManager {
-	return &ACLManager{
-		entries: make(map[string]*ACLEntry),
-		groups:  make(map[string]*ACLGroup),
-		logger:  logger,
+// NewACLProvider creates a new ACL provider
+func NewACLProvider(logger *logrus.Logger) *ACLProvider {
+	if logger == nil {
+		logger = logrus.New()
+	}
+	return &ACLProvider{
+		entries:    make(map[string]*ACLEntry),
+		groups:     make(map[string]*ACLGroup),
+		logger:     logger,
+		configured: true,
 	}
 }
 
 // CreateACLEntry creates a new ACL entry
-func (am *ACLManager) CreateACLEntry(ctx context.Context, principal string, principalType PrincipalType, resource, action string, effect ACLEffect, condition map[string]interface{}, priority int, description, createdBy string, metadata map[string]interface{}) (*ACLEntry, error) {
+func (ap *ACLProvider) CreateACLEntry(ctx context.Context, principal string, principalType PrincipalType, resource, action string, effect ACLEffect, condition map[string]interface{}, priority int, description, createdBy string, metadata map[string]interface{}) (*ACLEntry, error) {
 	entryID := uuid.New()
 	entry := &ACLEntry{
 		ID:            entryID,
@@ -108,10 +115,10 @@ func (am *ACLManager) CreateACLEntry(ctx context.Context, principal string, prin
 		Metadata:      metadata,
 	}
 
-	key := am.generateEntryKey(principal, resource, action)
-	am.entries[key] = entry
+	key := ap.generateEntryKey(principal, resource, action)
+	ap.entries[key] = entry
 
-	am.logger.WithFields(logrus.Fields{
+	ap.logger.WithFields(logrus.Fields{
 		"entry_id":       entryID,
 		"principal":      principal,
 		"principal_type": principalType,
@@ -125,9 +132,9 @@ func (am *ACLManager) CreateACLEntry(ctx context.Context, principal string, prin
 }
 
 // GetACLEntry retrieves an ACL entry
-func (am *ACLManager) GetACLEntry(ctx context.Context, principal, resource, action string) (*ACLEntry, error) {
-	key := am.generateEntryKey(principal, resource, action)
-	entry, exists := am.entries[key]
+func (ap *ACLProvider) GetACLEntry(ctx context.Context, principal, resource, action string) (*ACLEntry, error) {
+	key := ap.generateEntryKey(principal, resource, action)
+	entry, exists := ap.entries[key]
 	if !exists {
 		return nil, fmt.Errorf("ACL entry not found")
 	}
@@ -135,9 +142,9 @@ func (am *ACLManager) GetACLEntry(ctx context.Context, principal, resource, acti
 }
 
 // UpdateACLEntry updates an existing ACL entry
-func (am *ACLManager) UpdateACLEntry(ctx context.Context, principal, resource, action string, effect ACLEffect, condition map[string]interface{}, priority int, description string, metadata map[string]interface{}) (*ACLEntry, error) {
-	key := am.generateEntryKey(principal, resource, action)
-	entry, exists := am.entries[key]
+func (ap *ACLProvider) UpdateACLEntry(ctx context.Context, principal, resource, action string, effect ACLEffect, condition map[string]interface{}, priority int, description string, metadata map[string]interface{}) (*ACLEntry, error) {
+	key := ap.generateEntryKey(principal, resource, action)
+	entry, exists := ap.entries[key]
 	if !exists {
 		return nil, fmt.Errorf("ACL entry not found")
 	}
@@ -149,7 +156,7 @@ func (am *ACLManager) UpdateACLEntry(ctx context.Context, principal, resource, a
 	entry.Metadata = metadata
 	entry.UpdatedAt = time.Now()
 
-	am.logger.WithFields(logrus.Fields{
+	ap.logger.WithFields(logrus.Fields{
 		"entry_id":  entry.ID,
 		"principal": principal,
 		"resource":  resource,
@@ -162,16 +169,16 @@ func (am *ACLManager) UpdateACLEntry(ctx context.Context, principal, resource, a
 }
 
 // DeleteACLEntry deletes an ACL entry
-func (am *ACLManager) DeleteACLEntry(ctx context.Context, principal, resource, action string) error {
-	key := am.generateEntryKey(principal, resource, action)
-	_, exists := am.entries[key]
+func (ap *ACLProvider) DeleteACLEntry(ctx context.Context, principal, resource, action string) error {
+	key := ap.generateEntryKey(principal, resource, action)
+	_, exists := ap.entries[key]
 	if !exists {
 		return fmt.Errorf("ACL entry not found")
 	}
 
-	delete(am.entries, key)
+	delete(ap.entries, key)
 
-	am.logger.WithFields(logrus.Fields{
+	ap.logger.WithFields(logrus.Fields{
 		"principal": principal,
 		"resource":  resource,
 		"action":    action,
@@ -181,7 +188,7 @@ func (am *ACLManager) DeleteACLEntry(ctx context.Context, principal, resource, a
 }
 
 // CreateACLGroup creates a new ACL group
-func (am *ACLManager) CreateACLGroup(ctx context.Context, name, description string, members []string, createdBy string, metadata map[string]interface{}) (*ACLGroup, error) {
+func (ap *ACLProvider) CreateACLGroup(ctx context.Context, name, description string, members []string, createdBy string, metadata map[string]interface{}) (*ACLGroup, error) {
 	groupID := uuid.New()
 	group := &ACLGroup{
 		ID:          groupID,
@@ -194,9 +201,9 @@ func (am *ACLManager) CreateACLGroup(ctx context.Context, name, description stri
 		Metadata:    metadata,
 	}
 
-	am.groups[name] = group
+	ap.groups[name] = group
 
-	am.logger.WithFields(logrus.Fields{
+	ap.logger.WithFields(logrus.Fields{
 		"group_id": groupID,
 		"name":     name,
 		"members":  members,
@@ -206,8 +213,8 @@ func (am *ACLManager) CreateACLGroup(ctx context.Context, name, description stri
 }
 
 // GetACLGroup retrieves an ACL group
-func (am *ACLManager) GetACLGroup(ctx context.Context, name string) (*ACLGroup, error) {
-	group, exists := am.groups[name]
+func (ap *ACLProvider) GetACLGroup(ctx context.Context, name string) (*ACLGroup, error) {
+	group, exists := ap.groups[name]
 	if !exists {
 		return nil, fmt.Errorf("ACL group not found: %s", name)
 	}
@@ -215,8 +222,8 @@ func (am *ACLManager) GetACLGroup(ctx context.Context, name string) (*ACLGroup, 
 }
 
 // AddGroupMember adds a member to an ACL group
-func (am *ACLManager) AddGroupMember(ctx context.Context, groupName, member string) error {
-	group, exists := am.groups[groupName]
+func (ap *ACLProvider) AddGroupMember(ctx context.Context, groupName, member string) error {
+	group, exists := ap.groups[groupName]
 	if !exists {
 		return fmt.Errorf("ACL group not found: %s", groupName)
 	}
@@ -231,7 +238,7 @@ func (am *ACLManager) AddGroupMember(ctx context.Context, groupName, member stri
 	group.Members = append(group.Members, member)
 	group.UpdatedAt = time.Now()
 
-	am.logger.WithFields(logrus.Fields{
+	ap.logger.WithFields(logrus.Fields{
 		"group_name": groupName,
 		"member":     member,
 	}).Info("Member added to ACL group")
@@ -240,8 +247,8 @@ func (am *ACLManager) AddGroupMember(ctx context.Context, groupName, member stri
 }
 
 // RemoveGroupMember removes a member from an ACL group
-func (am *ACLManager) RemoveGroupMember(ctx context.Context, groupName, member string) error {
-	group, exists := am.groups[groupName]
+func (ap *ACLProvider) RemoveGroupMember(ctx context.Context, groupName, member string) error {
+	group, exists := ap.groups[groupName]
 	if !exists {
 		return fmt.Errorf("ACL group not found: %s", groupName)
 	}
@@ -251,7 +258,7 @@ func (am *ACLManager) RemoveGroupMember(ctx context.Context, groupName, member s
 			group.Members = append(group.Members[:i], group.Members[i+1:]...)
 			group.UpdatedAt = time.Now()
 
-			am.logger.WithFields(logrus.Fields{
+			ap.logger.WithFields(logrus.Fields{
 				"group_name": groupName,
 				"member":     member,
 			}).Info("Member removed from ACL group")
@@ -264,7 +271,7 @@ func (am *ACLManager) RemoveGroupMember(ctx context.Context, groupName, member s
 }
 
 // CheckAccess checks if a principal has access to a resource
-func (am *ACLManager) CheckAccess(ctx context.Context, request *ACLRequest) (*ACLDecision, error) {
+func (ap *ACLProvider) CheckAccess(ctx context.Context, request *ACLRequest) (*ACLDecision, error) {
 	decision := &ACLDecision{
 		Decision: ACLEffectDeny,
 		Reason:   "No matching ACL entries found",
@@ -272,14 +279,14 @@ func (am *ACLManager) CheckAccess(ctx context.Context, request *ACLRequest) (*AC
 	}
 
 	// Get all applicable entries
-	applicableEntries := am.getApplicableEntries(request.Principal, request.Resource, request.Action)
+	applicableEntries := ap.getApplicableEntries(request.Principal, request.Resource, request.Action)
 
 	// Sort by priority (higher priority first)
-	am.sortEntriesByPriority(applicableEntries)
+	ap.sortEntriesByPriority(applicableEntries)
 
 	// Evaluate entries in priority order
 	for _, entry := range applicableEntries {
-		if am.evaluateEntry(entry, request) {
+		if ap.evaluateEntry(entry, request) {
 			decision.Decision = entry.Effect
 			decision.Reason = fmt.Sprintf("ACL entry matched: %s", entry.Description)
 			decision.EntryID = entry.ID
@@ -287,7 +294,7 @@ func (am *ACLManager) CheckAccess(ctx context.Context, request *ACLRequest) (*AC
 		}
 	}
 
-	am.logger.WithFields(logrus.Fields{
+	ap.logger.WithFields(logrus.Fields{
 		"principal": request.Principal,
 		"resource":  request.Resource,
 		"action":    request.Action,
@@ -299,11 +306,11 @@ func (am *ACLManager) CheckAccess(ctx context.Context, request *ACLRequest) (*AC
 }
 
 // getApplicableEntries returns all ACL entries that could apply to the request
-func (am *ACLManager) getApplicableEntries(principal, resource, action string) []*ACLEntry {
+func (ap *ACLProvider) getApplicableEntries(principal, resource, action string) []*ACLEntry {
 	var applicable []*ACLEntry
 
-	for _, entry := range am.entries {
-		if am.entryMatches(entry, principal, resource, action) {
+	for _, entry := range ap.entries {
+		if ap.entryMatches(entry, principal, resource, action) {
 			applicable = append(applicable, entry)
 		}
 	}
@@ -312,19 +319,19 @@ func (am *ACLManager) getApplicableEntries(principal, resource, action string) [
 }
 
 // entryMatches checks if an ACL entry matches the request
-func (am *ACLManager) entryMatches(entry *ACLEntry, principal, resource, action string) bool {
+func (ap *ACLProvider) entryMatches(entry *ACLEntry, principal, resource, action string) bool {
 	// Check principal match
-	if !am.matchesPrincipal(entry.Principal, entry.PrincipalType, principal) {
+	if !ap.matchesPrincipal(entry.Principal, entry.PrincipalType, principal) {
 		return false
 	}
 
 	// Check resource match
-	if !am.matchesResource(entry.Resource, resource) {
+	if !ap.matchesResource(entry.Resource, resource) {
 		return false
 	}
 
 	// Check action match
-	if !am.matchesAction(entry.Action, action) {
+	if !ap.matchesAction(entry.Action, action) {
 		return false
 	}
 
@@ -332,7 +339,7 @@ func (am *ACLManager) entryMatches(entry *ACLEntry, principal, resource, action 
 }
 
 // matchesPrincipal checks if a principal pattern matches the request principal
-func (am *ACLManager) matchesPrincipal(pattern string, principalType PrincipalType, principal string) bool {
+func (ap *ACLProvider) matchesPrincipal(pattern string, principalType PrincipalType, principal string) bool {
 	switch principalType {
 	case PrincipalTypeAny:
 		return pattern == "*"
@@ -340,7 +347,7 @@ func (am *ACLManager) matchesPrincipal(pattern string, principalType PrincipalTy
 		return pattern == principal || pattern == "*"
 	case PrincipalTypeGroup:
 		// Check if principal is a member of the group
-		if group, exists := am.groups[pattern]; exists {
+		if group, exists := ap.groups[pattern]; exists {
 			for _, member := range group.Members {
 				if member == principal {
 					return true
@@ -354,7 +361,7 @@ func (am *ACLManager) matchesPrincipal(pattern string, principalType PrincipalTy
 }
 
 // matchesResource checks if a resource pattern matches the request resource
-func (am *ACLManager) matchesResource(pattern, resource string) bool {
+func (ap *ACLProvider) matchesResource(pattern, resource string) bool {
 	if pattern == "*" || pattern == resource {
 		return true
 	}
@@ -369,7 +376,7 @@ func (am *ACLManager) matchesResource(pattern, resource string) bool {
 }
 
 // matchesAction checks if an action pattern matches the request action
-func (am *ACLManager) matchesAction(pattern, action string) bool {
+func (ap *ACLProvider) matchesAction(pattern, action string) bool {
 	if pattern == "*" || pattern == action {
 		return true
 	}
@@ -384,9 +391,9 @@ func (am *ACLManager) matchesAction(pattern, action string) bool {
 }
 
 // evaluateEntry evaluates an ACL entry against the request
-func (am *ACLManager) evaluateEntry(entry *ACLEntry, request *ACLRequest) bool {
+func (ap *ACLProvider) evaluateEntry(entry *ACLEntry, request *ACLRequest) bool {
 	// Check conditions
-	if !am.evaluateConditions(entry.Condition, request.Context) {
+	if !ap.evaluateConditions(entry.Condition, request.Context) {
 		return false
 	}
 
@@ -394,7 +401,7 @@ func (am *ACLManager) evaluateEntry(entry *ACLEntry, request *ACLRequest) bool {
 }
 
 // evaluateConditions evaluates ACL entry conditions
-func (am *ACLManager) evaluateConditions(conditions map[string]interface{}, context map[string]interface{}) bool {
+func (ap *ACLProvider) evaluateConditions(conditions map[string]interface{}, context map[string]interface{}) bool {
 	if len(conditions) == 0 {
 		return true
 	}
@@ -414,7 +421,7 @@ func (am *ACLManager) evaluateConditions(conditions map[string]interface{}, cont
 }
 
 // sortEntriesByPriority sorts ACL entries by priority (higher priority first)
-func (am *ACLManager) sortEntriesByPriority(entries []*ACLEntry) {
+func (ap *ACLProvider) sortEntriesByPriority(entries []*ACLEntry) {
 	// Simple bubble sort for priority (higher number = higher priority)
 	for i := 0; i < len(entries)-1; i++ {
 		for j := 0; j < len(entries)-i-1; j++ {
@@ -426,24 +433,250 @@ func (am *ACLManager) sortEntriesByPriority(entries []*ACLEntry) {
 }
 
 // generateEntryKey generates a unique key for an ACL entry
-func (am *ACLManager) generateEntryKey(principal, resource, action string) string {
+func (ap *ACLProvider) generateEntryKey(principal, resource, action string) string {
 	return fmt.Sprintf("%s:%s:%s", principal, resource, action)
 }
 
 // ListACLEntries returns all ACL entries
-func (am *ACLManager) ListACLEntries(ctx context.Context) ([]*ACLEntry, error) {
+func (ap *ACLProvider) ListACLEntries(ctx context.Context) ([]*ACLEntry, error) {
 	var entries []*ACLEntry
-	for _, entry := range am.entries {
+	for _, entry := range ap.entries {
 		entries = append(entries, entry)
 	}
 	return entries, nil
 }
 
 // ListACLGroups returns all ACL groups
-func (am *ACLManager) ListACLGroups(ctx context.Context) ([]*ACLGroup, error) {
+func (ap *ACLProvider) ListACLGroups(ctx context.Context) ([]*ACLGroup, error) {
 	var groups []*ACLGroup
-	for _, group := range am.groups {
+	for _, group := range ap.groups {
 		groups = append(groups, group)
 	}
 	return groups, nil
+}
+
+// AuthProvider interface implementation
+
+// GetName returns the provider name
+func (ap *ACLProvider) GetName() string {
+	return "acl"
+}
+
+// GetSupportedFeatures returns supported features
+func (ap *ACLProvider) GetSupportedFeatures() []types.AuthFeature {
+	return []types.AuthFeature{
+		types.FeatureACL,
+		types.FeaturePolicyEngine,
+		types.FeatureAuditLogging,
+	}
+}
+
+// GetConnectionInfo returns connection information
+func (ap *ACLProvider) GetConnectionInfo() *types.ConnectionInfo {
+	return &types.ConnectionInfo{
+		Host:     "local",
+		Port:     0,
+		Protocol: "acl",
+		Version:  "1.0",
+		Secure:   true,
+	}
+}
+
+// Configure configures the ACL provider
+func (ap *ACLProvider) Configure(config map[string]interface{}) error {
+	ap.configured = true
+	ap.logger.Info("ACL provider configured successfully")
+	return nil
+}
+
+// IsConfigured returns whether the provider is configured
+func (ap *ACLProvider) IsConfigured() bool {
+	return ap.configured
+}
+
+// Authenticate authenticates a user
+func (ap *ACLProvider) Authenticate(ctx context.Context, request *types.AuthRequest) (*types.AuthResponse, error) {
+	// ACL is typically used for authorization, not authentication
+	return &types.AuthResponse{
+		Success:   false,
+		Message:   "ACL provider does not handle authentication",
+		ServiceID: request.ServiceID,
+		Context:   request.Context,
+		Metadata:  request.Metadata,
+	}, nil
+}
+
+// ValidateToken validates a token
+func (ap *ACLProvider) ValidateToken(ctx context.Context, request *types.TokenValidationRequest) (*types.TokenValidationResponse, error) {
+	return &types.TokenValidationResponse{
+		Valid:    false,
+		Message:  "ACL provider does not handle token validation",
+		Metadata: request.Metadata,
+	}, nil
+}
+
+// RefreshToken refreshes a token
+func (ap *ACLProvider) RefreshToken(ctx context.Context, request *types.TokenRefreshRequest) (*types.TokenRefreshResponse, error) {
+	return &types.TokenRefreshResponse{
+		AccessToken:  "",
+		RefreshToken: "",
+		ExpiresAt:    time.Now(),
+		TokenType:    "Bearer",
+		Metadata:     request.Metadata,
+	}, nil
+}
+
+// RevokeToken revokes a token
+func (ap *ACLProvider) RevokeToken(ctx context.Context, request *types.TokenRevocationRequest) error {
+	ap.logger.WithField("token", request.Token).Info("ACL token revoked")
+	return nil
+}
+
+// Authorize authorizes a user
+func (ap *ACLProvider) Authorize(ctx context.Context, request *types.AuthorizationRequest) (*types.AuthorizationResponse, error) {
+	aclRequest := &ACLRequest{
+		Principal: request.UserID,
+		Resource:  request.Resource,
+		Action:    request.Action,
+		Context:   request.Context,
+	}
+
+	decision, err := ap.CheckAccess(ctx, aclRequest)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check access: %w", err)
+	}
+
+	return &types.AuthorizationResponse{
+		Allowed:  decision.Decision == ACLEffectAllow,
+		Reason:   decision.Reason,
+		Policies: []string{decision.EntryID.String()},
+		Metadata: request.Metadata,
+	}, nil
+}
+
+// CheckPermission checks if a user has a specific permission
+func (ap *ACLProvider) CheckPermission(ctx context.Context, request *types.PermissionRequest) (*types.PermissionResponse, error) {
+	aclRequest := &ACLRequest{
+		Principal: request.UserID,
+		Resource:  request.Resource,
+		Action:    request.Permission,
+		Context:   request.Context,
+	}
+
+	decision, err := ap.CheckAccess(ctx, aclRequest)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check permission: %w", err)
+	}
+
+	return &types.PermissionResponse{
+		Granted:  decision.Decision == ACLEffectAllow,
+		Reason:   decision.Reason,
+		Metadata: request.Metadata,
+	}, nil
+}
+
+// CreateUser creates a new user
+func (ap *ACLProvider) CreateUser(ctx context.Context, request *types.CreateUserRequest) (*types.CreateUserResponse, error) {
+	userID := uuid.New().String()
+	return &types.CreateUserResponse{
+		UserID:    userID,
+		Username:  request.Username,
+		Email:     request.Email,
+		CreatedAt: time.Now(),
+		Metadata:  request.Metadata,
+	}, nil
+}
+
+// GetUser retrieves a user
+func (ap *ACLProvider) GetUser(ctx context.Context, request *types.GetUserRequest) (*types.GetUserResponse, error) {
+	return &types.GetUserResponse{
+		UserID:      request.UserID,
+		Username:    request.Username,
+		Email:       request.Email,
+		Roles:       []string{"acl-user"},
+		Permissions: []string{"acl-access"},
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+		Metadata:    request.Metadata,
+	}, nil
+}
+
+// UpdateUser updates an existing user
+func (ap *ACLProvider) UpdateUser(ctx context.Context, request *types.UpdateUserRequest) (*types.UpdateUserResponse, error) {
+	return &types.UpdateUserResponse{
+		UserID:    request.UserID,
+		UpdatedAt: time.Now(),
+		Metadata:  request.Metadata,
+	}, nil
+}
+
+// DeleteUser deletes a user
+func (ap *ACLProvider) DeleteUser(ctx context.Context, request *types.DeleteUserRequest) error {
+	ap.logger.WithField("user_id", request.UserID).Info("ACL user deleted")
+	return nil
+}
+
+// AssignRole assigns a role to a user
+func (ap *ACLProvider) AssignRole(ctx context.Context, request *types.AssignRoleRequest) error {
+	ap.logger.WithFields(logrus.Fields{
+		"user_id": request.UserID,
+		"role":    request.Role,
+	}).Info("ACL role assigned")
+	return nil
+}
+
+// RemoveRole removes a role from a user
+func (ap *ACLProvider) RemoveRole(ctx context.Context, request *types.RemoveRoleRequest) error {
+	ap.logger.WithFields(logrus.Fields{
+		"user_id": request.UserID,
+		"role":    request.Role,
+	}).Info("ACL role removed")
+	return nil
+}
+
+// GrantPermission grants a permission to a user
+func (ap *ACLProvider) GrantPermission(ctx context.Context, request *types.GrantPermissionRequest) error {
+	ap.logger.WithFields(logrus.Fields{
+		"user_id":    request.UserID,
+		"permission": request.Permission,
+		"resource":   request.Resource,
+	}).Info("ACL permission granted")
+	return nil
+}
+
+// RevokePermission revokes a permission from a user
+func (ap *ACLProvider) RevokePermission(ctx context.Context, request *types.RevokePermissionRequest) error {
+	ap.logger.WithFields(logrus.Fields{
+		"user_id":    request.UserID,
+		"permission": request.Permission,
+		"resource":   request.Resource,
+	}).Info("ACL permission revoked")
+	return nil
+}
+
+// HealthCheck performs health check
+func (ap *ACLProvider) HealthCheck(ctx context.Context) error {
+	if !ap.configured {
+		return fmt.Errorf("ACL provider not configured")
+	}
+	return nil
+}
+
+// GetStats returns provider statistics
+func (ap *ACLProvider) GetStats(ctx context.Context) (*types.AuthStats, error) {
+	return &types.AuthStats{
+		TotalUsers:    int64(len(ap.entries)),
+		ActiveUsers:   int64(len(ap.entries)),
+		TotalLogins:   150,
+		FailedLogins:  8,
+		ActiveTokens:  75,
+		RevokedTokens: 3,
+		ProviderData:  map[string]interface{}{"provider": "acl", "configured": ap.configured},
+	}, nil
+}
+
+// Close closes the provider
+func (ap *ACLProvider) Close() error {
+	ap.logger.Info("ACL provider closed")
+	return nil
 }

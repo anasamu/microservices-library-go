@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/anasamu/microservices-library-go/libs/payment/gateway"
+	"github.com/anasamu/microservices-library-go/payment/gateway"
 	"github.com/sirupsen/logrus"
 	"github.com/stripe/stripe-go/v78"
 	"github.com/stripe/stripe-go/v78/checkout/session"
@@ -109,8 +109,13 @@ func (p *Provider) CreatePayment(ctx context.Context, request *gateway.PaymentRe
 	// Add customer information
 	if request.Customer != nil {
 		sessionParams.CustomerEmail = stripe.String(request.Customer.Email)
+		// Note: CustomerName is not supported in CheckoutSessionParams
+		// Customer name can be added to metadata if needed
 		if request.Customer.Name != "" {
-			sessionParams.CustomerName = stripe.String(request.Customer.Name)
+			if sessionParams.Metadata == nil {
+				sessionParams.Metadata = make(map[string]string)
+			}
+			sessionParams.Metadata["customer_name"] = request.Customer.Name
 		}
 	}
 
@@ -155,13 +160,25 @@ func (p *Provider) GetPayment(ctx context.Context, paymentID string) (*gateway.P
 		}
 	}
 
+	// Extract description from line items
+	description := ""
+	if len(session.LineItems.Data) > 0 && session.LineItems.Data[0].Description != "" {
+		description = session.LineItems.Data[0].Description
+	}
+
+	// Convert metadata from map[string]string to map[string]interface{}
+	metadata := make(map[string]interface{})
+	for k, v := range session.Metadata {
+		metadata[k] = v
+	}
+
 	payment := &gateway.Payment{
 		ID:          session.ID,
 		Amount:      session.AmountTotal,
 		Currency:    string(session.Currency),
 		Status:      p.convertStatus(session.PaymentStatus),
-		Description: session.DisplayItems[0].Custom.Name,
-		Metadata:    session.Metadata,
+		Description: description,
+		Metadata:    metadata,
 		ProviderData: map[string]interface{}{
 			"session_id":     session.ID,
 			"payment_intent": session.PaymentIntent,
@@ -270,7 +287,7 @@ func (p *Provider) ValidateWebhook(ctx context.Context, payload []byte, signatur
 
 	webhookEvent := &gateway.WebhookEvent{
 		ID:        event.ID,
-		Type:      event.Type,
+		Type:      string(event.Type),
 		Data:      make(map[string]interface{}),
 		CreatedAt: time.Unix(event.Created, 0),
 	}

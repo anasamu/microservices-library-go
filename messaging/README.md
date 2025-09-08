@@ -8,6 +8,7 @@ A comprehensive, modular, and production-ready messaging library for Go microser
 - **Kafka**: Full Kafka support with topics, partitions, and consumer groups
 - **RabbitMQ**: Complete RabbitMQ integration with exchanges, queues, and routing
 - **AWS SQS**: AWS SQS support for scalable message queuing
+- **NATS**: High-performance NATS messaging with JetStream support
 
 ### 📊 Core Operations
 - **Message Publishing**: Publish messages to topics/queues
@@ -49,9 +50,12 @@ libs/messaging/
 │   ├── rabbitmq/              # RabbitMQ provider
 │   │   ├── provider.go        # RabbitMQ implementation
 │   │   └── go.mod             # RabbitMQ dependencies
-│   └── sqs/                   # AWS SQS provider
-│       ├── provider.go        # SQS implementation
-│       └── go.mod             # SQS dependencies
+│   ├── sqs/                   # AWS SQS provider
+│   │   ├── provider.go        # SQS implementation
+│   │   └── go.mod             # SQS dependencies
+│   └── nats/                  # NATS provider
+│       ├── provider.go        # NATS implementation
+│       └── go.mod             # NATS dependencies
 ├── go.mod                     # Main module dependencies
 └── README.md                  # This file
 ```
@@ -84,6 +88,9 @@ go get github.com/anasamu/microservices-library-go/libs/messaging/providers/rabb
 
 # For AWS SQS support
 go get github.com/anasamu/microservices-library-go/libs/messaging/providers/sqs
+
+# For NATS support
+go get github.com/anasamu/microservices-library-go/libs/messaging/providers/nats
 ```
 
 ## 📖 Usage Examples
@@ -364,6 +371,12 @@ export RABBITMQ_EXCHANGE="example-exchange"
 export SQS_REGION="us-east-1"
 export SQS_ACCESS_KEY="your-access-key"
 export SQS_SECRET_KEY="your-secret-key"
+
+# NATS Configuration
+export NATS_URL="nats://localhost:4222"
+export NATS_USERNAME="your-username"
+export NATS_PASSWORD="your-password"
+export NATS_JETSTREAM="true"
 ```
 
 ### Configuration Files
@@ -392,6 +405,12 @@ You can also use configuration files:
       "region": "us-east-1",
       "access_key": "your-access-key",
       "secret_key": "your-secret-key"
+    },
+    "nats": {
+      "url": "nats://localhost:4222",
+      "username": "your-username",
+      "password": "your-password",
+      "jetstream": true
     }
   }
 }

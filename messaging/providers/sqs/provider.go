@@ -6,11 +6,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/anasamu/microservices-library-go/libs/messaging/gateway"
+	"github.com/anasamu/microservices-library-go/messaging/gateway"
 	"github.com/aws/aws-sdk-go-v2/aws"
+	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
 
@@ -84,8 +86,8 @@ func (p *Provider) Configure(config map[string]interface{}) error {
 	secretKey, _ := config["secret_key"].(string)
 
 	// Create AWS config
-	awsConfig, err := config.LoadDefaultConfig(context.Background(),
-		config.WithRegion(region),
+	awsConfig, err := awsconfig.LoadDefaultConfig(context.Background(),
+		awsconfig.WithRegion(region),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to load AWS config: %w", err)
@@ -179,15 +181,15 @@ func (p *Provider) PublishMessage(ctx context.Context, request *gateway.PublishR
 
 	// Create message attributes
 	messageAttributes := make(map[string]types.MessageAttributeValue)
-	messageAttributes["message-type"] = &types.MessageAttributeValue{
+	messageAttributes["message-type"] = types.MessageAttributeValue{
 		DataType:    aws.String("String"),
 		StringValue: aws.String(request.Message.Type),
 	}
-	messageAttributes["source"] = &types.MessageAttributeValue{
+	messageAttributes["source"] = types.MessageAttributeValue{
 		DataType:    aws.String("String"),
 		StringValue: aws.String(request.Message.Source),
 	}
-	messageAttributes["target"] = &types.MessageAttributeValue{
+	messageAttributes["target"] = types.MessageAttributeValue{
 		DataType:    aws.String("String"),
 		StringValue: aws.String(request.Message.Target),
 	}
@@ -195,7 +197,7 @@ func (p *Provider) PublishMessage(ctx context.Context, request *gateway.PublishR
 	// Add custom headers as message attributes
 	for key, value := range request.Headers {
 		if str, ok := value.(string); ok {
-			messageAttributes[key] = &types.MessageAttributeValue{
+			messageAttributes[key] = types.MessageAttributeValue{
 				DataType:    aws.String("String"),
 				StringValue: aws.String(str),
 			}
@@ -205,7 +207,7 @@ func (p *Provider) PublishMessage(ctx context.Context, request *gateway.PublishR
 	// Add message headers as message attributes
 	for key, value := range request.Message.Headers {
 		if str, ok := value.(string); ok {
-			messageAttributes[key] = &types.MessageAttributeValue{
+			messageAttributes[key] = types.MessageAttributeValue{
 				DataType:    aws.String("String"),
 				StringValue: aws.String(str),
 			}
@@ -223,7 +225,7 @@ func (p *Provider) PublishMessage(ctx context.Context, request *gateway.PublishR
 	if request.Message.ScheduledAt != nil {
 		delay := int32(time.Until(*request.Message.ScheduledAt).Seconds())
 		if delay > 0 && delay <= 900 { // SQS max delay is 15 minutes
-			sendInput.DelaySeconds = aws.Int32(delay)
+			sendInput.DelaySeconds = delay
 		}
 	}
 
@@ -233,7 +235,7 @@ func (p *Provider) PublishMessage(ctx context.Context, request *gateway.PublishR
 	}
 
 	// Add deduplication ID for FIFO queues
-	if request.Message.ID != nil {
+	if request.Message.ID != uuid.Nil {
 		sendInput.MessageDeduplicationId = aws.String(request.Message.ID.String())
 	}
 
@@ -249,7 +251,6 @@ func (p *Provider) PublishMessage(ctx context.Context, request *gateway.PublishR
 		Timestamp: time.Now(),
 		ProviderData: map[string]interface{}{
 			"queue_url": queueURL,
-			"md5":       *result.MD5OfBody,
 		},
 	}
 
@@ -423,7 +424,7 @@ func (p *Provider) PublishBatch(ctx context.Context, request *gateway.PublishBat
 
 		// Add message attributes
 		messageAttributes := make(map[string]types.MessageAttributeValue)
-		messageAttributes["message-type"] = &types.MessageAttributeValue{
+		messageAttributes["message-type"] = types.MessageAttributeValue{
 			DataType:    aws.String("String"),
 			StringValue: aws.String(msg.Type),
 		}
@@ -595,8 +596,8 @@ func (p *Provider) handleMessages(ctx context.Context, queueURL string, request 
 	// Receive messages
 	result, err := p.client.ReceiveMessage(ctx, &sqs.ReceiveMessageInput{
 		QueueUrl:              aws.String(queueURL),
-		MaxNumberOfMessages:   aws.Int32(10),
-		WaitTimeSeconds:       aws.Int32(20), // Long polling
+		MaxNumberOfMessages:   10,
+		WaitTimeSeconds:       20, // Long polling
 		MessageAttributeNames: []string{"All"},
 	})
 	if err != nil {

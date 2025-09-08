@@ -1,0 +1,316 @@
+server:
+  port: "8080"
+  host: "0.0.0.0"
+  environment: "development"
+  service_name: "microservices-gateway"
+  version: "1.0.0"
+  read_timeout: 30
+  write_timeout: 30
+  idle_timeout: 120
+
+database:
+  postgresql:
+    host: "localhost"
+    port: 5432
+    user: "postgres"
+    password: "password"
+    dbname: "microservices"
+    sslmode: "disable"
+    max_conns: 25
+    min_conns: 5
+  mongodb:
+    uri: "mongodb://localhost:27017"
+    database: "microservices"
+    max_pool: 100
+    min_pool: 10
+
+redis:
+  host: "localhost"
+  port: 6379
+  password: ""
+  db: 0
+  pool_size: 10
+
+logging:
+  level: "info"
+  format: "json"
+  output: "stdout"
+  elastic_url: ""
+  index: ""
+
+monitoring:
+  prometheus:
+    enabled: true
+    port: "9090"
+    path: "/metrics"
+  jaeger:
+    enabled: false
+    endpoint: ""
+    service: "microservices-gateway"
+
+storage:
+  minio:
+    endpoint: "localhost:9000"
+    access_key_id: ""
+    secret_access_key: ""
+    use_ssl: false
+    bucket_name: "microservices"
+  s3:
+    region: ""
+    access_key_id: ""
+    secret_access_key: ""
+    bucket_name: ""
+
+search:
+  elasticsearch:
+    url: "http://localhost:9200"
+    username: ""
+    password: ""
+    index: "microservices"
+
+auth:
+  jwt:
+    secret_key: "your-secret-key"
+    expiration: 3600
+    refresh_exp: 86400
+    issuer: "microservices"
+    audience: ""
+
+rabbitmq:
+  url: "amqp://guest:guest@localhost:5672/"
+  exchange: "microservices"
+  queue: "default"
+
+kafka:
+  brokers: ["localhost:9092"]
+  topic: "microservices"
+  group_id: "gateway"
+
+grpc:
+  port: "50051"
+  host: "0.0.0.0"
+  timeout: 30
+
+# Microservices Configuration
+services:
+  user_service:
+    name: "user-service"
+    host: "localhost"
+    port: "8001"
+    protocol: "http"
+    version: "1.0.0"
+    environment: "development"
+    health_check:
+      enabled: true
+      path: "/health"
+      interval: 30
+      timeout: 5
+      retries: 3
+      grace_period: 10
+    retry:
+      enabled: true
+      max_attempts: 3
+      initial_delay: 1000
+      max_delay: 5000
+      multiplier: 2.0
+      jitter: true
+    timeout:
+      connect: 5000
+      read: 10000
+      write: 10000
+      total: 30000
+    circuit_breaker:
+      enabled: true
+      failure_threshold: 5
+      success_threshold: 3
+      timeout: 60
+      max_requests: 10
+      interval: 30
+      error_percent_threshold: 50.0
+    load_balancer:
+      strategy: "round_robin"
+      servers: ["localhost:8001", "localhost:8002"]
+      weights: [1, 1]
+      health_check: true
+    metadata:
+      team: "backend"
+      owner: "user-team"
+      priority: "high"
+
+  auth_service:
+    name: "auth-service"
+    host: "localhost"
+    port: "8002"
+    protocol: "http"
+    version: "1.0.0"
+    environment: "development"
+    health_check:
+      enabled: true
+      path: "/health"
+      interval: 30
+    retry:
+      enabled: true
+      max_attempts: 3
+    circuit_breaker:
+      enabled: true
+      failure_threshold: 3
+    metadata:
+      team: "security"
+      owner: "auth-team"
+
+  payment_service:
+    name: "payment-service"
+    host: "localhost"
+    port: "8003"
+    protocol: "http"
+    version: "1.0.0"
+    environment: "development"
+    health_check:
+      enabled: true
+      path: "/health"
+    retry:
+      enabled: true
+      max_attempts: 5
+    circuit_breaker:
+      enabled: true
+      failure_threshold: 2
+    metadata:
+      team: "finance"
+      owner: "payment-team"
+      priority: "critical"
+
+  notification_service:
+    name: "notification-service"
+    host: "localhost"
+    port: "8004"
+    protocol: "http"
+    version: "1.0.0"
+    environment: "development"
+    health_check:
+      enabled: true
+      path: "/health"
+    retry:
+      enabled: true
+      max_attempts: 3
+    circuit_breaker:
+      enabled: false
+    metadata:
+      team: "communication"
+      owner: "notification-team"
+
+  file_service:
+    name: "file-service"
+    host: "localhost"
+    port: "8005"
+    protocol: "http"
+    version: "1.0.0"
+    environment: "development"
+    health_check:
+      enabled: true
+      path: "/health"
+    retry:
+      enabled: true
+      max_attempts: 3
+    circuit_breaker:
+      enabled: true
+      failure_threshold: 5
+    metadata:
+      team: "storage"
+      owner: "file-team"
+
+  report_service:
+    name: "report-service"
+    host: "localhost"
+    port: "8006"
+    protocol: "http"
+    version: "1.0.0"
+    environment: "development"
+    health_check:
+      enabled: true
+      path: "/health"
+    retry:
+      enabled: true
+      max_attempts: 3
+    circuit_breaker:
+      enabled: true
+      failure_threshold: 5
+    metadata:
+      team: "analytics"
+      owner: "report-team"
+
+  # Custom services can be added dynamically
+  custom_services:
+    analytics_service:
+      name: "analytics-service"
+      host: "analytics.example.com"
+      port: "8080"
+      protocol: "https"
+      version: "2.0.0"
+      environment: "production"
+      health_check:
+        enabled: true
+        path: "/health"
+        interval: 60
+      retry:
+        enabled: true
+        max_attempts: 5
+      circuit_breaker:
+        enabled: true
+        failure_threshold: 3
+      custom:
+        api_key: "analytics-secret-key"
+        batch_size: 1000
+        flush_interval: 30
+        enabled: true
+      metadata:
+        team: "data"
+        owner: "analytics-team"
+        priority: "medium"
+
+# Dynamic Custom Configuration
+# These can be any custom fields you need
+feature_flags:
+  new_ui: true
+  beta_features: false
+  experimental_api: true
+  maintenance_mode: false
+
+api_settings:
+  rate_limit: 1000
+  timeout: 30
+  max_retries: 3
+  cache_ttl: 3600
+
+deployment:
+  region: "us-east-1"
+  cluster: "production"
+  namespace: "microservices"
+  replicas: 3
+
+external_services:
+  email_provider:
+    name: "sendgrid"
+    api_key: "sendgrid-api-key"
+    from_email: "noreply@example.com"
+  sms_provider:
+    name: "twilio"
+    account_sid: "twilio-account-sid"
+    auth_token: "twilio-auth-token"
+    from_number: "+1234567890"
+
+business_rules:
+  max_file_size: 10485760  # 10MB
+  max_users_per_organization: 1000
+  session_timeout: 3600
+  password_min_length: 8
+  require_2fa: false
+
+integrations:
+  stripe:
+    public_key: "pk_test_..."
+    secret_key: "sk_test_..."
+    webhook_secret: "whsec_..."
+  paypal:
+    client_id: "paypal-client-id"
+    client_secret: "paypal-client-secret"
+    sandbox: true

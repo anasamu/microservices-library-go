@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/anasamu/microservices-library-go/libs/database/gateway"
+	"github.com/anasamu/microservices-library-go/database/gateway"
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 )
@@ -301,14 +301,14 @@ func (p *Provider) GetStats(ctx context.Context) (*gateway.DatabaseStats, error)
 	poolStats := p.client.PoolStats()
 
 	return &gateway.DatabaseStats{
-		ActiveConnections: poolStats.TotalConns,
-		IdleConnections:   poolStats.IdleConns,
-		MaxConnections:    poolStats.TotalConns,
-		WaitCount:         poolStats.WaitCount,
-		WaitDuration:      poolStats.WaitDuration,
-		MaxIdleClosed:     poolStats.MaxIdleClosed,
-		MaxIdleTimeClosed: poolStats.MaxIdleTimeClosed,
-		MaxLifetimeClosed: poolStats.MaxLifetimeClosed,
+		ActiveConnections: int(poolStats.TotalConns),
+		IdleConnections:   int(poolStats.IdleConns),
+		MaxConnections:    int(poolStats.TotalConns),
+		WaitCount:         0, // Redis pool stats don't expose wait count
+		WaitDuration:      0, // Redis pool stats don't expose wait duration
+		MaxIdleClosed:     0, // Redis pool stats don't expose these fields
+		MaxIdleTimeClosed: 0,
+		MaxLifetimeClosed: 0,
 		ProviderData: map[string]interface{}{
 			"driver": "redis",
 			"info":   info,

@@ -8,6 +8,8 @@ import (
 
 	"github.com/anasamu/microservices-library-go/storage/gateway"
 	"github.com/aws/aws-sdk-go-v2/aws"
+	v4 "github.com/aws/aws-sdk-go-v2/aws/signer/v4"
+	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
@@ -58,55 +60,42 @@ func (p *Provider) GetAllowedTypes() []string {
 }
 
 // Configure configures the S3 provider
-func (p *Provider) Configure(config map[string]interface{}) error {
-	region, ok := config["region"].(string)
+func (p *Provider) Configure(cfg map[string]interface{}) error {
+	region, ok := cfg["region"].(string)
 	if !ok || region == "" {
 		region = "us-east-1" // Default region
 	}
 
-	accessKeyID, ok := config["access_key_id"].(string)
+	accessKeyID, ok := cfg["access_key_id"].(string)
 	if !ok || accessKeyID == "" {
 		return fmt.Errorf("s3 access_key_id is required")
 	}
 
-	secretAccessKey, ok := config["secret_access_key"].(string)
+	secretAccessKey, ok := cfg["secret_access_key"].(string)
 	if !ok || secretAccessKey == "" {
 		return fmt.Errorf("s3 secret_access_key is required")
 	}
 
-	endpoint, _ := config["endpoint"].(string)
-	useSSL, _ := config["use_ssl"].(bool)
+	endpoint, _ := cfg["endpoint"].(string)
 
 	// Create AWS config
-	awsConfig, err := config.LoadDefaultConfig(context.TODO(),
-		config.WithRegion(region),
-		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(accessKeyID, secretAccessKey, "")),
+	awsConfig, err := awsconfig.LoadDefaultConfig(context.TODO(),
+		awsconfig.WithRegion(region),
+		awsconfig.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(accessKeyID, secretAccessKey, "")),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to load AWS config: %w", err)
 	}
 
-	// Create S3 client
-	s3Config := &aws.Config{
-		Region:   aws.String(region),
-		Endpoint: aws.String(endpoint),
-	}
-
-	if endpoint != "" {
-		s3Config.UsePathStyle = aws.Bool(true) // For MinIO and other S3-compatible services
-	}
-
+	// Create S3 client with options
 	p.client = s3.NewFromConfig(awsConfig, func(o *s3.Options) {
 		if endpoint != "" {
 			o.BaseEndpoint = aws.String(endpoint)
 			o.UsePathStyle = true
 		}
-		if !useSSL {
-			o.UseHTTPS = false
-		}
 	})
 
-	p.config = config
+	p.config = cfg
 
 	p.logger.Info("S3 provider configured successfully")
 	return nil
@@ -281,7 +270,6 @@ func (p *Provider) DeleteObjects(ctx context.Context, request *gateway.DeleteObj
 		response.Deleted[i] = gateway.DeletedObject{
 			Key:       aws.ToString(deleted.Key),
 			VersionID: aws.ToString(deleted.VersionId),
-			ETag:      strings.Trim(aws.ToString(deleted.ETag), "\""),
 		}
 	}
 
@@ -574,7 +562,7 @@ func (p *Provider) GeneratePresignedURL(ctx context.Context, request *gateway.Pr
 	}
 
 	// Generate presigned URL
-	var presignResult *s3.PresignedHTTPRequest
+	var presignResult *v4.PresignedHTTPRequest
 	var err error
 
 	switch req := input.(type) {

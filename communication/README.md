@@ -1,6 +1,6 @@
 # Communication Gateway Library
 
-A comprehensive, modular, and production-ready communication library for Go microservices. This library provides a unified interface for multiple communication providers including HTTP, WebSocket, and gRPC.
+A comprehensive, modular, and production-ready communication library for Go microservices. This library provides a unified interface for multiple communication providers including HTTP, WebSocket, gRPC, QUIC, GraphQL, and SSE.
 
 ## 🚀 Features
 
@@ -8,6 +8,9 @@ A comprehensive, modular, and production-ready communication library for Go micr
 - **HTTP**: Full HTTP server support with middleware, CORS, and health checks
 - **WebSocket**: Complete WebSocket integration with real-time messaging
 - **gRPC**: gRPC server support with reflection and service registration
+- **QUIC**: QUIC protocol support for high-performance communication
+- **GraphQL**: GraphQL server support with query handling
+- **SSE**: Server-Sent Events for real-time streaming
 
 ### 📊 Core Operations
 - **Request Handling**: Handle HTTP requests with unified interface
@@ -47,9 +50,18 @@ communication/
 │   ├── websocket/             # WebSocket provider
 │   │   ├── provider.go        # WebSocket implementation
 │   │   └── go.mod             # WebSocket dependencies
-│   └── grpc/                  # gRPC provider
-│       ├── provider.go        # gRPC implementation
-│       └── go.mod             # gRPC dependencies
+│   ├── grpc/                  # gRPC provider
+│   │   ├── provider.go        # gRPC implementation
+│   │   └── go.mod             # gRPC dependencies
+│   ├── quic/                  # QUIC provider
+│   │   ├── provider.go        # QUIC implementation
+│   │   └── go.mod             # QUIC dependencies
+│   ├── graphql/               # GraphQL provider
+│   │   ├── provider.go        # GraphQL implementation
+│   │   └── go.mod             # GraphQL dependencies
+│   └── sse/                   # Server-Sent Events provider
+│       ├── provider.go        # SSE implementation
+│       └── go.mod             # SSE dependencies
 ├── go.mod                     # Main module dependencies
 └── README.md                  # This file
 ```
@@ -82,6 +94,15 @@ go get github.com/anasamu/microservices-library-go/communication/providers/webso
 
 # For gRPC support
 go get github.com/anasamu/microservices-library-go/communication/providers/grpc
+
+# For QUIC support
+go get github.com/anasamu/microservices-library-go/communication/providers/quic
+
+# For GraphQL support
+go get github.com/anasamu/microservices-library-go/communication/providers/graphql
+
+# For SSE support
+go get github.com/anasamu/microservices-library-go/communication/providers/sse
 ```
 
 ## 📖 Usage Examples
@@ -258,6 +279,88 @@ if err != nil {
 log.Printf("Message broadcasted: %d sent, %d failed", response.SentCount, response.FailedCount)
 ```
 
+### QUIC Provider Example
+
+```go
+import (
+    "github.com/anasamu/microservices-library-go/communication/providers/quic"
+    "github.com/anasamu/microservices-library-go/communication/providers/graphql"
+    "github.com/anasamu/microservices-library-go/communication/providers/sse"
+)
+
+// Register QUIC provider
+quicProvider := quic.NewProvider(logger)
+quicConfig := map[string]interface{}{
+    "host":              "0.0.0.0",
+    "port":              8443,
+    "max_streams":       100,
+    "max_idle_timeout":  "30s",
+    "keep_alive_period": "10s",
+}
+
+if err := quicProvider.Configure(quicConfig); err != nil {
+    log.Fatal(err)
+}
+
+communicationManager.RegisterProvider(quicProvider)
+
+// Start QUIC server
+err := communicationManager.Start(ctx, "quic", quicConfig)
+if err != nil {
+    log.Fatal(err)
+}
+```
+
+### GraphQL Provider Example
+
+```go
+// Register GraphQL provider
+graphqlProvider := graphql.NewProvider(logger)
+graphqlConfig := map[string]interface{}{
+    "host":                "0.0.0.0",
+    "port":                8080,
+    "enable_introspection": true,
+    "enable_playground":   true,
+}
+
+if err := graphqlProvider.Configure(graphqlConfig); err != nil {
+    log.Fatal(err)
+}
+
+communicationManager.RegisterProvider(graphqlProvider)
+
+// Start GraphQL server
+err := communicationManager.Start(ctx, "graphql", graphqlConfig)
+if err != nil {
+    log.Fatal(err)
+}
+```
+
+### SSE Provider Example
+
+```go
+// Register SSE provider
+sseProvider := sse.NewProvider(logger)
+sseConfig := map[string]interface{}{
+    "host":               "0.0.0.0",
+    "port":               8080,
+    "heartbeat_interval": "30s",
+    "max_connections":    1000,
+}
+
+if err := sseProvider.Configure(sseConfig); err != nil {
+    log.Fatal(err)
+}
+
+communicationManager.RegisterProvider(sseProvider)
+
+// Start SSE server
+err := communicationManager.Start(ctx, "sse", sseConfig)
+if err != nil {
+    log.Fatal(err)
+}
+```
+
 ### Connection Management
 
 ```go
@@ -360,6 +463,25 @@ export GRPC_PORT="9090"
 export GRPC_MAX_RECV_MSG_SIZE="4194304"
 export GRPC_MAX_SEND_MSG_SIZE="4194304"
 export GRPC_ENABLE_REFLECTION="true"
+
+# QUIC Configuration
+export QUIC_HOST="0.0.0.0"
+export QUIC_PORT="8443"
+export QUIC_MAX_STREAMS="100"
+export QUIC_MAX_IDLE_TIMEOUT="30s"
+export QUIC_KEEP_ALIVE_PERIOD="10s"
+
+# GraphQL Configuration
+export GRAPHQL_HOST="0.0.0.0"
+export GRAPHQL_PORT="8080"
+export GRAPHQL_ENABLE_INTROSPECTION="true"
+export GRAPHQL_ENABLE_PLAYGROUND="true"
+
+# SSE Configuration
+export SSE_HOST="0.0.0.0"
+export SSE_PORT="8080"
+export SSE_HEARTBEAT_INTERVAL="30s"
+export SSE_MAX_CONNECTIONS="1000"
 ```
 
 ### Configuration Files
@@ -398,6 +520,25 @@ You can also use configuration files:
       "max_recv_msg_size": 4194304,
       "max_send_msg_size": 4194304,
       "enable_reflection": true
+    },
+    "quic": {
+      "host": "0.0.0.0",
+      "port": 8443,
+      "max_streams": 100,
+      "max_idle_timeout": "30s",
+      "keep_alive_period": "10s"
+    },
+    "graphql": {
+      "host": "0.0.0.0",
+      "port": 8080,
+      "enable_introspection": true,
+      "enable_playground": true
+    },
+    "sse": {
+      "host": "0.0.0.0",
+      "port": 8080,
+      "heartbeat_interval": "30s",
+      "max_connections": 1000
     }
   }
 }
@@ -415,6 +556,9 @@ go test ./...
 go test ./providers/http/...
 go test ./providers/websocket/...
 go test ./providers/grpc/...
+go test ./providers/quic/...
+go test ./providers/graphql/...
+go test ./providers/sse/...
 
 # Run gateway tests
 go test ./gateway/...
@@ -553,6 +697,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Go HTTP Server](https://golang.org/pkg/net/http/) for HTTP server functionality
 - [Gorilla WebSocket](https://github.com/gorilla/websocket) for WebSocket support
 - [gRPC Go](https://github.com/grpc/grpc-go) for gRPC server functionality
+- [QUIC Go](https://github.com/quic-go/quic-go) for QUIC protocol support
+- [GraphQL Go](https://github.com/graphql-go/graphql) for GraphQL server functionality
 - [Logrus](https://github.com/sirupsen/logrus) for structured logging
 
 ---

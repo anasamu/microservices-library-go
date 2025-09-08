@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/anasamu/microservices-library-go/libs/payment/gateway"
+	"github.com/anasamu/microservices-library-go/payment/gateway"
 	"github.com/sirupsen/logrus"
 )
 

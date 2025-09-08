@@ -1,11 +1,17 @@
-module github.com/anasamu/microservices-library-go/libs/database/providers/redis
+module github.com/anasamu/microservices-library-go/database/providers/redis
 
 go 1.21
 
 require (
-	github.com/anasamu/microservices-library-go/libs/database/gateway v0.0.0
+	github.com/anasamu/microservices-library-go/database/gateway v0.0.0
 	github.com/redis/go-redis/v9 v9.3.0
 	github.com/sirupsen/logrus v1.9.3
 )
 
-replace github.com/anasamu/microservices-library-go/libs/database/gateway => ../../gateway
+require (
+	github.com/cespare/xxhash/v2 v2.2.0 // indirect
+	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
+	golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8 // indirect
+)
+
+replace github.com/anasamu/microservices-library-go/database/gateway => ../../gateway

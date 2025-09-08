@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/anasamu/microservices-library-go/libs/communication/gateway"
+	"github.com/anasamu/microservices-library-go/communication/gateway"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -113,7 +113,9 @@ func (p *Provider) Configure(config map[string]interface{}) error {
 		enableReflection = true
 	}
 
+	// Store the processed config
 	p.config = config
+	p.config["enable_reflection"] = enableReflection
 
 	p.logger.Info("gRPC provider configured successfully")
 	return nil

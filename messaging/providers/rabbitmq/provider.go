@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/anasamu/microservices-library-go/libs/messaging/gateway"
+	"github.com/anasamu/microservices-library-go/messaging/gateway"
 	"github.com/rabbitmq/amqp091-go"
 	"github.com/sirupsen/logrus"
 )
@@ -544,7 +544,6 @@ func (p *Provider) GetTopicInfo(ctx context.Context, request *gateway.GetTopicIn
 		MessageCount: int64(queue.Messages),
 		ProviderData: map[string]interface{}{
 			"consumers": queue.Consumers,
-			"durable":   queue.Durable,
 		},
 	}
 

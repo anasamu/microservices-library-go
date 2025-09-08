@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/anasamu/microservices-library-go/libs/communication/gateway"
+	"github.com/anasamu/microservices-library-go/communication/gateway"
 	"github.com/sirupsen/logrus"
 )
 
@@ -447,6 +447,26 @@ type responseRecorder struct {
 	statusCode int
 	headers    map[string]string
 	body       []byte
+}
+
+// Header returns the response headers
+func (r *responseRecorder) Header() http.Header {
+	header := make(http.Header)
+	for k, v := range r.headers {
+		header.Set(k, v)
+	}
+	return header
+}
+
+// Write writes data to the response body
+func (r *responseRecorder) Write(data []byte) (int, error) {
+	r.body = append(r.body, data...)
+	return len(data), nil
+}
+
+// WriteHeader sets the status code
+func (r *responseRecorder) WriteHeader(statusCode int) {
+	r.statusCode = statusCode
 }
 
 // responseWriter wraps http.ResponseWriter to capture status code

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/anasamu/microservices-library-go/libs/database/gateway"
+	"github.com/anasamu/microservices-library-go/database/gateway"
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -189,10 +189,11 @@ func (p *Provider) WithTransaction(ctx context.Context, fn func(gateway.Transact
 	defer session.EndSession(ctx)
 
 	return mongo.WithSession(ctx, session, func(sc mongo.SessionContext) error {
-		return session.WithTransaction(sc, func(sc mongo.SessionContext) (interface{}, error) {
+		_, err := session.WithTransaction(sc, func(sc mongo.SessionContext) (interface{}, error) {
 			tx := &Transaction{session: session}
 			return nil, fn(tx)
 		})
+		return err
 	})
 }
 

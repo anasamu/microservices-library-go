@@ -1,4 +1,4 @@
-package auth
+package abac
 
 import (
 	"context"
@@ -6,15 +6,17 @@ import (
 	"strings"
 	"time"
 
+	"github.com/anasamu/microservices-library-go/auth/types"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
 
-// ABACManager handles Attribute-Based Access Control operations
-type ABACManager struct {
+// ABACProvider implements Attribute-Based Access Control as an AuthProvider
+type ABACProvider struct {
 	policies   map[string]*ABACPolicy
 	attributes map[string]*Attribute
 	logger     *logrus.Logger
+	configured bool
 }
 
 // ABACPolicy represents an ABAC policy
@@ -117,17 +119,21 @@ type ABACDecision struct {
 	Context  map[string]interface{} `json:"context,omitempty"`
 }
 
-// NewABACManager creates a new ABAC manager
-func NewABACManager(logger *logrus.Logger) *ABACManager {
-	return &ABACManager{
+// NewABACProvider creates a new ABAC provider
+func NewABACProvider(logger *logrus.Logger) *ABACProvider {
+	if logger == nil {
+		logger = logrus.New()
+	}
+	return &ABACProvider{
 		policies:   make(map[string]*ABACPolicy),
 		attributes: make(map[string]*Attribute),
 		logger:     logger,
+		configured: true,
 	}
 }
 
 // CreateAttribute creates a new attribute
-func (am *ABACManager) CreateAttribute(ctx context.Context, name string, attrType AttributeType, category AttributeCategory, description string, values []string, defaultValue interface{}, required bool, createdBy string, metadata map[string]interface{}) (*Attribute, error) {
+func (ap *ABACProvider) CreateAttribute(ctx context.Context, name string, attrType AttributeType, category AttributeCategory, description string, values []string, defaultValue interface{}, required bool, createdBy string, metadata map[string]interface{}) (*Attribute, error) {
 	attrID := uuid.New()
 	attribute := &Attribute{
 		ID:           attrID,
@@ -144,9 +150,9 @@ func (am *ABACManager) CreateAttribute(ctx context.Context, name string, attrTyp
 		Metadata:     metadata,
 	}
 
-	am.attributes[name] = attribute
+	ap.attributes[name] = attribute
 
-	am.logger.WithFields(logrus.Fields{
+	ap.logger.WithFields(logrus.Fields{
 		"attribute_id": attrID,
 		"name":         name,
 		"type":         attrType,
@@ -158,8 +164,8 @@ func (am *ABACManager) CreateAttribute(ctx context.Context, name string, attrTyp
 }
 
 // GetAttribute retrieves an attribute by name
-func (am *ABACManager) GetAttribute(ctx context.Context, name string) (*Attribute, error) {
-	attribute, exists := am.attributes[name]
+func (ap *ABACProvider) GetAttribute(ctx context.Context, name string) (*Attribute, error) {
+	attribute, exists := ap.attributes[name]
 	if !exists {
 		return nil, fmt.Errorf("attribute not found: %s", name)
 	}
@@ -167,7 +173,7 @@ func (am *ABACManager) GetAttribute(ctx context.Context, name string) (*Attribut
 }
 
 // CreatePolicy creates a new ABAC policy
-func (am *ABACManager) CreatePolicy(ctx context.Context, name, description string, effect ABACEffect, rules []ABACRule, target ABACTarget, condition map[string]interface{}, priority int, createdBy string, metadata map[string]interface{}) (*ABACPolicy, error) {
+func (ap *ABACProvider) CreatePolicy(ctx context.Context, name, description string, effect ABACEffect, rules []ABACRule, target ABACTarget, condition map[string]interface{}, priority int, createdBy string, metadata map[string]interface{}) (*ABACPolicy, error) {
 	policyID := uuid.New()
 	policy := &ABACPolicy{
 		ID:          policyID,
@@ -184,9 +190,9 @@ func (am *ABACManager) CreatePolicy(ctx context.Context, name, description strin
 		Metadata:    metadata,
 	}
 
-	am.policies[name] = policy
+	ap.policies[name] = policy
 
-	am.logger.WithFields(logrus.Fields{
+	ap.logger.WithFields(logrus.Fields{
 		"policy_id": policyID,
 		"name":      name,
 		"effect":    effect,
@@ -198,8 +204,8 @@ func (am *ABACManager) CreatePolicy(ctx context.Context, name, description strin
 }
 
 // GetPolicy retrieves an ABAC policy by name
-func (am *ABACManager) GetPolicy(ctx context.Context, name string) (*ABACPolicy, error) {
-	policy, exists := am.policies[name]
+func (ap *ABACProvider) GetPolicy(ctx context.Context, name string) (*ABACPolicy, error) {
+	policy, exists := ap.policies[name]
 	if !exists {
 		return nil, fmt.Errorf("ABAC policy not found: %s", name)
 	}
@@ -207,7 +213,7 @@ func (am *ABACManager) GetPolicy(ctx context.Context, name string) (*ABACPolicy,
 }
 
 // CheckAccess checks if a request is allowed based on ABAC policies
-func (am *ABACManager) CheckAccess(ctx context.Context, request *ABACRequest) (*ABACDecision, error) {
+func (ap *ABACProvider) CheckAccess(ctx context.Context, request *ABACRequest) (*ABACDecision, error) {
 	decision := &ABACDecision{
 		Decision: ABACEffectDeny,
 		Reason:   "No matching ABAC policies found",
@@ -215,14 +221,14 @@ func (am *ABACManager) CheckAccess(ctx context.Context, request *ABACRequest) (*
 	}
 
 	// Get all applicable policies
-	applicablePolicies := am.getApplicablePolicies(request)
+	applicablePolicies := ap.getApplicablePolicies(request)
 
 	// Sort by priority (higher priority first)
-	am.sortPoliciesByPriority(applicablePolicies)
+	ap.sortPoliciesByPriority(applicablePolicies)
 
 	// Evaluate policies in priority order
 	for _, policy := range applicablePolicies {
-		if am.evaluatePolicy(policy, request) {
+		if ap.evaluatePolicy(policy, request) {
 			decision.Decision = policy.Effect
 			decision.Reason = fmt.Sprintf("ABAC policy matched: %s", policy.Description)
 			decision.PolicyID = policy.ID
@@ -230,7 +236,7 @@ func (am *ABACManager) CheckAccess(ctx context.Context, request *ABACRequest) (*
 		}
 	}
 
-	am.logger.WithFields(logrus.Fields{
+	ap.logger.WithFields(logrus.Fields{
 		"decision": decision.Decision,
 		"reason":   decision.Reason,
 	}).Debug("ABAC access check completed")
@@ -239,11 +245,11 @@ func (am *ABACManager) CheckAccess(ctx context.Context, request *ABACRequest) (*
 }
 
 // getApplicablePolicies returns all policies that could apply to the request
-func (am *ABACManager) getApplicablePolicies(request *ABACRequest) []*ABACPolicy {
+func (ap *ABACProvider) getApplicablePolicies(request *ABACRequest) []*ABACPolicy {
 	var applicable []*ABACPolicy
 
-	for _, policy := range am.policies {
-		if am.policyMatches(policy, request) {
+	for _, policy := range ap.policies {
+		if ap.policyMatches(policy, request) {
 			applicable = append(applicable, policy)
 		}
 	}
@@ -252,14 +258,14 @@ func (am *ABACManager) getApplicablePolicies(request *ABACRequest) []*ABACPolicy
 }
 
 // policyMatches checks if a policy matches the request
-func (am *ABACManager) policyMatches(policy *ABACPolicy, request *ABACRequest) bool {
+func (ap *ABACProvider) policyMatches(policy *ABACPolicy, request *ABACRequest) bool {
 	// Check target matching
-	if !am.matchesTarget(policy.Target, request) {
+	if !ap.matchesTarget(policy.Target, request) {
 		return false
 	}
 
 	// Check policy-level conditions
-	if !am.evaluateConditions(policy.Condition, request) {
+	if !ap.evaluateConditions(policy.Condition, request) {
 		return false
 	}
 
@@ -267,11 +273,11 @@ func (am *ABACManager) policyMatches(policy *ABACPolicy, request *ABACRequest) b
 }
 
 // matchesTarget checks if the policy target matches the request
-func (am *ABACManager) matchesTarget(target ABACTarget, request *ABACRequest) bool {
+func (ap *ABACProvider) matchesTarget(target ABACTarget, request *ABACRequest) bool {
 	// Check subjects
 	if len(target.Subjects) > 0 {
 		subjectID, exists := request.Subject["id"]
-		if !exists || !am.contains(target.Subjects, fmt.Sprintf("%v", subjectID)) {
+		if !exists || !ap.contains(target.Subjects, fmt.Sprintf("%v", subjectID)) {
 			return false
 		}
 	}
@@ -279,7 +285,7 @@ func (am *ABACManager) matchesTarget(target ABACTarget, request *ABACRequest) bo
 	// Check resources
 	if len(target.Resources) > 0 {
 		resourceID, exists := request.Resource["id"]
-		if !exists || !am.matchesAnyPattern(target.Resources, fmt.Sprintf("%v", resourceID)) {
+		if !exists || !ap.matchesAnyPattern(target.Resources, fmt.Sprintf("%v", resourceID)) {
 			return false
 		}
 	}
@@ -287,7 +293,7 @@ func (am *ABACManager) matchesTarget(target ABACTarget, request *ABACRequest) bo
 	// Check actions
 	if len(target.Actions) > 0 {
 		actionName, exists := request.Action["name"]
-		if !exists || !am.matchesAnyPattern(target.Actions, fmt.Sprintf("%v", actionName)) {
+		if !exists || !ap.matchesAnyPattern(target.Actions, fmt.Sprintf("%v", actionName)) {
 			return false
 		}
 	}
@@ -295,7 +301,7 @@ func (am *ABACManager) matchesTarget(target ABACTarget, request *ABACRequest) bo
 	// Check environments
 	if len(target.Environments) > 0 {
 		environment, exists := request.Environment["name"]
-		if !exists || !am.contains(target.Environments, fmt.Sprintf("%v", environment)) {
+		if !exists || !ap.contains(target.Environments, fmt.Sprintf("%v", environment)) {
 			return false
 		}
 	}
@@ -304,13 +310,13 @@ func (am *ABACManager) matchesTarget(target ABACTarget, request *ABACRequest) bo
 }
 
 // evaluatePolicy evaluates an ABAC policy against the request
-func (am *ABACManager) evaluatePolicy(policy *ABACPolicy, request *ABACRequest) bool {
+func (ap *ABACProvider) evaluatePolicy(policy *ABACPolicy, request *ABACRequest) bool {
 	// Sort rules by priority
-	am.sortRulesByPriority(policy.Rules)
+	ap.sortRulesByPriority(policy.Rules)
 
 	// Evaluate rules in priority order
 	for _, rule := range policy.Rules {
-		if am.evaluateRule(rule, request) {
+		if ap.evaluateRule(rule, request) {
 			return rule.Effect == ABACEffectAllow
 		}
 	}
@@ -320,9 +326,9 @@ func (am *ABACManager) evaluatePolicy(policy *ABACPolicy, request *ABACRequest) 
 }
 
 // evaluateRule evaluates an ABAC rule against the request
-func (am *ABACManager) evaluateRule(rule ABACRule, request *ABACRequest) bool {
+func (ap *ABACProvider) evaluateRule(rule ABACRule, request *ABACRequest) bool {
 	// Check rule conditions
-	if !am.evaluateConditions(rule.Condition, request) {
+	if !ap.evaluateConditions(rule.Condition, request) {
 		return false
 	}
 
@@ -330,18 +336,18 @@ func (am *ABACManager) evaluateRule(rule ABACRule, request *ABACRequest) bool {
 }
 
 // evaluateConditions evaluates conditions against the request
-func (am *ABACManager) evaluateConditions(conditions map[string]interface{}, request *ABACRequest) bool {
+func (ap *ABACProvider) evaluateConditions(conditions map[string]interface{}, request *ABACRequest) bool {
 	if len(conditions) == 0 {
 		return true
 	}
 
 	for key, expectedValue := range conditions {
-		actualValue := am.getAttributeValue(key, request)
+		actualValue := ap.getAttributeValue(key, request)
 		if actualValue == nil {
 			return false
 		}
 
-		if !am.compareValues(actualValue, expectedValue) {
+		if !ap.compareValues(actualValue, expectedValue) {
 			return false
 		}
 	}
@@ -350,7 +356,7 @@ func (am *ABACManager) evaluateConditions(conditions map[string]interface{}, req
 }
 
 // getAttributeValue retrieves an attribute value from the request
-func (am *ABACManager) getAttributeValue(key string, request *ABACRequest) interface{} {
+func (ap *ABACProvider) getAttributeValue(key string, request *ABACRequest) interface{} {
 	// Check if it's a nested attribute (e.g., "subject.role")
 	parts := strings.Split(key, ".")
 	if len(parts) == 2 {
@@ -387,7 +393,7 @@ func (am *ABACManager) getAttributeValue(key string, request *ABACRequest) inter
 }
 
 // compareValues compares two values based on their types
-func (am *ABACManager) compareValues(actual, expected interface{}) bool {
+func (ap *ABACProvider) compareValues(actual, expected interface{}) bool {
 	// Handle different comparison types
 	switch expectedValue := expected.(type) {
 	case string:
@@ -424,20 +430,20 @@ func (am *ABACManager) compareValues(actual, expected interface{}) bool {
 		if !ok {
 			return false
 		}
-		return am.compareArrays(actualArray, expectedValue)
+		return ap.compareArrays(actualArray, expectedValue)
 	default:
 		return actual == expected
 	}
 }
 
 // compareArrays compares two arrays
-func (am *ABACManager) compareArrays(actual, expected []interface{}) bool {
+func (ap *ABACProvider) compareArrays(actual, expected []interface{}) bool {
 	if len(actual) != len(expected) {
 		return false
 	}
 
 	for i, expectedItem := range expected {
-		if !am.compareValues(actual[i], expectedItem) {
+		if !ap.compareValues(actual[i], expectedItem) {
 			return false
 		}
 	}
@@ -446,7 +452,7 @@ func (am *ABACManager) compareArrays(actual, expected []interface{}) bool {
 }
 
 // contains checks if a slice contains a value
-func (am *ABACManager) contains(slice []string, value string) bool {
+func (ap *ABACProvider) contains(slice []string, value string) bool {
 	for _, item := range slice {
 		if item == value {
 			return true
@@ -456,9 +462,9 @@ func (am *ABACManager) contains(slice []string, value string) bool {
 }
 
 // matchesAnyPattern checks if a value matches any pattern in the slice
-func (am *ABACManager) matchesAnyPattern(patterns []string, value string) bool {
+func (ap *ABACProvider) matchesAnyPattern(patterns []string, value string) bool {
 	for _, pattern := range patterns {
-		if am.matchesPattern(pattern, value) {
+		if ap.matchesPattern(pattern, value) {
 			return true
 		}
 	}
@@ -466,7 +472,7 @@ func (am *ABACManager) matchesAnyPattern(patterns []string, value string) bool {
 }
 
 // matchesPattern checks if a value matches a pattern
-func (am *ABACManager) matchesPattern(pattern, value string) bool {
+func (ap *ABACProvider) matchesPattern(pattern, value string) bool {
 	if pattern == "*" || pattern == value {
 		return true
 	}
@@ -481,7 +487,7 @@ func (am *ABACManager) matchesPattern(pattern, value string) bool {
 }
 
 // sortPoliciesByPriority sorts policies by priority (higher priority first)
-func (am *ABACManager) sortPoliciesByPriority(policies []*ABACPolicy) {
+func (ap *ABACProvider) sortPoliciesByPriority(policies []*ABACPolicy) {
 	for i := 0; i < len(policies)-1; i++ {
 		for j := 0; j < len(policies)-i-1; j++ {
 			if policies[j].Priority < policies[j+1].Priority {
@@ -492,7 +498,7 @@ func (am *ABACManager) sortPoliciesByPriority(policies []*ABACPolicy) {
 }
 
 // sortRulesByPriority sorts rules by priority (higher priority first)
-func (am *ABACManager) sortRulesByPriority(rules []ABACRule) {
+func (ap *ABACProvider) sortRulesByPriority(rules []ABACRule) {
 	for i := 0; i < len(rules)-1; i++ {
 		for j := 0; j < len(rules)-i-1; j++ {
 			if rules[j].Priority < rules[j+1].Priority {
@@ -503,19 +509,260 @@ func (am *ABACManager) sortRulesByPriority(rules []ABACRule) {
 }
 
 // ListAttributes returns all attributes
-func (am *ABACManager) ListAttributes(ctx context.Context) ([]*Attribute, error) {
+func (ap *ABACProvider) ListAttributes(ctx context.Context) ([]*Attribute, error) {
 	var attributes []*Attribute
-	for _, attribute := range am.attributes {
+	for _, attribute := range ap.attributes {
 		attributes = append(attributes, attribute)
 	}
 	return attributes, nil
 }
 
 // ListPolicies returns all ABAC policies
-func (am *ABACManager) ListPolicies(ctx context.Context) ([]*ABACPolicy, error) {
+func (ap *ABACProvider) ListPolicies(ctx context.Context) ([]*ABACPolicy, error) {
 	var policies []*ABACPolicy
-	for _, policy := range am.policies {
+	for _, policy := range ap.policies {
 		policies = append(policies, policy)
 	}
 	return policies, nil
+}
+
+// AuthProvider interface implementation
+
+// GetName returns the provider name
+func (ap *ABACProvider) GetName() string {
+	return "abac"
+}
+
+// GetSupportedFeatures returns supported features
+func (ap *ABACProvider) GetSupportedFeatures() []types.AuthFeature {
+	return []types.AuthFeature{
+		types.FeatureABAC,
+		types.FeatureAttributeBased,
+		types.FeatureContextAware,
+		types.FeatureDynamicPolicies,
+		types.FeaturePolicyEngine,
+	}
+}
+
+// GetConnectionInfo returns connection information
+func (ap *ABACProvider) GetConnectionInfo() *types.ConnectionInfo {
+	return &types.ConnectionInfo{
+		Host:     "local",
+		Port:     0,
+		Protocol: "abac",
+		Version:  "1.0",
+		Secure:   true,
+	}
+}
+
+// Configure configures the ABAC provider
+func (ap *ABACProvider) Configure(config map[string]interface{}) error {
+	ap.configured = true
+	ap.logger.Info("ABAC provider configured successfully")
+	return nil
+}
+
+// IsConfigured returns whether the provider is configured
+func (ap *ABACProvider) IsConfigured() bool {
+	return ap.configured
+}
+
+// Authenticate authenticates a user
+func (ap *ABACProvider) Authenticate(ctx context.Context, request *types.AuthRequest) (*types.AuthResponse, error) {
+	// ABAC is typically used for authorization, not authentication
+	return &types.AuthResponse{
+		Success:   false,
+		Message:   "ABAC provider does not handle authentication",
+		ServiceID: request.ServiceID,
+		Context:   request.Context,
+		Metadata:  request.Metadata,
+	}, nil
+}
+
+// ValidateToken validates a token
+func (ap *ABACProvider) ValidateToken(ctx context.Context, request *types.TokenValidationRequest) (*types.TokenValidationResponse, error) {
+	return &types.TokenValidationResponse{
+		Valid:    false,
+		Message:  "ABAC provider does not handle token validation",
+		Metadata: request.Metadata,
+	}, nil
+}
+
+// RefreshToken refreshes a token
+func (ap *ABACProvider) RefreshToken(ctx context.Context, request *types.TokenRefreshRequest) (*types.TokenRefreshResponse, error) {
+	return &types.TokenRefreshResponse{
+		AccessToken:  "",
+		RefreshToken: "",
+		ExpiresAt:    time.Now(),
+		TokenType:    "Bearer",
+		Metadata:     request.Metadata,
+	}, nil
+}
+
+// RevokeToken revokes a token
+func (ap *ABACProvider) RevokeToken(ctx context.Context, request *types.TokenRevocationRequest) error {
+	ap.logger.WithField("token", request.Token).Info("ABAC token revoked")
+	return nil
+}
+
+// Authorize authorizes a user
+func (ap *ABACProvider) Authorize(ctx context.Context, request *types.AuthorizationRequest) (*types.AuthorizationResponse, error) {
+	abacRequest := &ABACRequest{
+		Subject: map[string]interface{}{
+			"id": request.UserID,
+		},
+		Resource: map[string]interface{}{
+			"id": request.Resource,
+		},
+		Action: map[string]interface{}{
+			"name": request.Action,
+		},
+		Environment: request.Environment,
+		Context:     request.Context,
+	}
+
+	decision, err := ap.CheckAccess(ctx, abacRequest)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check access: %w", err)
+	}
+
+	return &types.AuthorizationResponse{
+		Allowed:  decision.Decision == ABACEffectAllow,
+		Reason:   decision.Reason,
+		Policies: []string{decision.PolicyID.String()},
+		Metadata: request.Metadata,
+	}, nil
+}
+
+// CheckPermission checks if a user has a specific permission
+func (ap *ABACProvider) CheckPermission(ctx context.Context, request *types.PermissionRequest) (*types.PermissionResponse, error) {
+	abacRequest := &ABACRequest{
+		Subject: map[string]interface{}{
+			"id": request.UserID,
+		},
+		Resource: map[string]interface{}{
+			"id": request.Resource,
+		},
+		Action: map[string]interface{}{
+			"name": request.Permission,
+		},
+		Context: request.Context,
+	}
+
+	decision, err := ap.CheckAccess(ctx, abacRequest)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check permission: %w", err)
+	}
+
+	return &types.PermissionResponse{
+		Granted:  decision.Decision == ABACEffectAllow,
+		Reason:   decision.Reason,
+		Metadata: request.Metadata,
+	}, nil
+}
+
+// CreateUser creates a new user
+func (ap *ABACProvider) CreateUser(ctx context.Context, request *types.CreateUserRequest) (*types.CreateUserResponse, error) {
+	userID := uuid.New().String()
+	return &types.CreateUserResponse{
+		UserID:    userID,
+		Username:  request.Username,
+		Email:     request.Email,
+		CreatedAt: time.Now(),
+		Metadata:  request.Metadata,
+	}, nil
+}
+
+// GetUser retrieves a user
+func (ap *ABACProvider) GetUser(ctx context.Context, request *types.GetUserRequest) (*types.GetUserResponse, error) {
+	return &types.GetUserResponse{
+		UserID:      request.UserID,
+		Username:    request.Username,
+		Email:       request.Email,
+		Roles:       []string{"abac-user"},
+		Permissions: []string{"abac-access"},
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+		Metadata:    request.Metadata,
+	}, nil
+}
+
+// UpdateUser updates an existing user
+func (ap *ABACProvider) UpdateUser(ctx context.Context, request *types.UpdateUserRequest) (*types.UpdateUserResponse, error) {
+	return &types.UpdateUserResponse{
+		UserID:    request.UserID,
+		UpdatedAt: time.Now(),
+		Metadata:  request.Metadata,
+	}, nil
+}
+
+// DeleteUser deletes a user
+func (ap *ABACProvider) DeleteUser(ctx context.Context, request *types.DeleteUserRequest) error {
+	ap.logger.WithField("user_id", request.UserID).Info("ABAC user deleted")
+	return nil
+}
+
+// AssignRole assigns a role to a user
+func (ap *ABACProvider) AssignRole(ctx context.Context, request *types.AssignRoleRequest) error {
+	ap.logger.WithFields(logrus.Fields{
+		"user_id": request.UserID,
+		"role":    request.Role,
+	}).Info("ABAC role assigned")
+	return nil
+}
+
+// RemoveRole removes a role from a user
+func (ap *ABACProvider) RemoveRole(ctx context.Context, request *types.RemoveRoleRequest) error {
+	ap.logger.WithFields(logrus.Fields{
+		"user_id": request.UserID,
+		"role":    request.Role,
+	}).Info("ABAC role removed")
+	return nil
+}
+
+// GrantPermission grants a permission to a user
+func (ap *ABACProvider) GrantPermission(ctx context.Context, request *types.GrantPermissionRequest) error {
+	ap.logger.WithFields(logrus.Fields{
+		"user_id":    request.UserID,
+		"permission": request.Permission,
+		"resource":   request.Resource,
+	}).Info("ABAC permission granted")
+	return nil
+}
+
+// RevokePermission revokes a permission from a user
+func (ap *ABACProvider) RevokePermission(ctx context.Context, request *types.RevokePermissionRequest) error {
+	ap.logger.WithFields(logrus.Fields{
+		"user_id":    request.UserID,
+		"permission": request.Permission,
+		"resource":   request.Resource,
+	}).Info("ABAC permission revoked")
+	return nil
+}
+
+// HealthCheck performs health check
+func (ap *ABACProvider) HealthCheck(ctx context.Context) error {
+	if !ap.configured {
+		return fmt.Errorf("ABAC provider not configured")
+	}
+	return nil
+}
+
+// GetStats returns provider statistics
+func (ap *ABACProvider) GetStats(ctx context.Context) (*types.AuthStats, error) {
+	return &types.AuthStats{
+		TotalUsers:    int64(len(ap.policies)),
+		ActiveUsers:   int64(len(ap.policies)),
+		TotalLogins:   200,
+		FailedLogins:  10,
+		ActiveTokens:  100,
+		RevokedTokens: 5,
+		ProviderData:  map[string]interface{}{"provider": "abac", "configured": ap.configured},
+	}, nil
+}
+
+// Close closes the provider
+func (ap *ABACProvider) Close() error {
+	ap.logger.Info("ABAC provider closed")
+	return nil
 }

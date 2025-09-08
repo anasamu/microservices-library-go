@@ -1,11 +1,16 @@
-module github.com/anasamu/microservices-library-go/libs/payment/providers/stripe
+module github.com/anasamu/microservices-library-go/payment/providers/stripe
 
 go 1.21
 
 require (
-	github.com/anasamu/microservices-library-go/libs/payment/gateway v0.0.0
+	github.com/anasamu/microservices-library-go/payment/gateway v0.0.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stripe/stripe-go/v78 v78.8.0
 )
 
-replace github.com/anasamu/microservices-library-go/libs/payment/gateway => ../../gateway
+require (
+	github.com/google/uuid v1.6.0 // indirect
+	golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8 // indirect
+)
+
+replace github.com/anasamu/microservices-library-go/payment/gateway => ../../gateway

@@ -2,12 +2,13 @@ package gcs
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"time"
 
 	"cloud.google.com/go/storage"
-	"github.com/anasamu/microservices-library-go/libs/storage/gateway"
+	"github.com/anasamu/microservices-library-go/storage/gateway"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
@@ -112,7 +113,7 @@ func (p *Provider) PutObject(ctx context.Context, request *gateway.PutObjectRequ
 
 	// Add ACL
 	if request.ACL != "" {
-		writer.PredefinedACL = storage.ACL(request.ACL)
+		writer.PredefinedACL = request.ACL
 	}
 
 	// Copy content
@@ -136,7 +137,7 @@ func (p *Provider) PutObject(ctx context.Context, request *gateway.PutObjectRequ
 
 	response := &gateway.PutObjectResponse{
 		Key:          request.Key,
-		ETag:         attrs.MD5,
+		ETag:         hex.EncodeToString(attrs.MD5),
 		Size:         attrs.Size,
 		LastModified: attrs.Updated,
 		Metadata:     attrs.Metadata,
@@ -180,7 +181,7 @@ func (p *Provider) GetObject(ctx context.Context, request *gateway.GetObjectRequ
 		Content:      reader,
 		Size:         attrs.Size,
 		ContentType:  attrs.ContentType,
-		ETag:         attrs.MD5,
+		ETag:         hex.EncodeToString(attrs.MD5),
 		LastModified: attrs.Updated,
 		Metadata:     attrs.Metadata,
 		ProviderData: map[string]interface{}{
@@ -299,7 +300,7 @@ func (p *Provider) ListObjects(ctx context.Context, request *gateway.ListObjects
 			Key:          attrs.Name,
 			Size:         attrs.Size,
 			LastModified: attrs.Updated,
-			ETag:         attrs.MD5,
+			ETag:         hex.EncodeToString(attrs.MD5),
 			ContentType:  attrs.ContentType,
 			Metadata:     attrs.Metadata,
 			StorageClass: string(attrs.StorageClass),
@@ -369,7 +370,7 @@ func (p *Provider) CopyObject(ctx context.Context, request *gateway.CopyObjectRe
 
 	// Add ACL if specified
 	if request.ACL != "" {
-		copier.PredefinedACL = storage.ACL(request.ACL)
+		copier.PredefinedACL = request.ACL
 	}
 
 	// Copy object
@@ -380,7 +381,7 @@ func (p *Provider) CopyObject(ctx context.Context, request *gateway.CopyObjectRe
 
 	response := &gateway.CopyObjectResponse{
 		Key:          request.DestKey,
-		ETag:         attrs.MD5,
+		ETag:         hex.EncodeToString(attrs.MD5),
 		LastModified: attrs.Updated,
 		Size:         attrs.Size,
 		ProviderData: map[string]interface{}{
@@ -453,7 +454,7 @@ func (p *Provider) GetObjectInfo(ctx context.Context, request *gateway.GetObject
 		Key:          request.Key,
 		Size:         attrs.Size,
 		LastModified: attrs.Updated,
-		ETag:         attrs.MD5,
+		ETag:         hex.EncodeToString(attrs.MD5),
 		ContentType:  attrs.ContentType,
 		Metadata:     attrs.Metadata,
 		StorageClass: string(attrs.StorageClass),
@@ -472,9 +473,8 @@ func (p *Provider) GeneratePresignedURL(ctx context.Context, request *gateway.Pr
 		return "", fmt.Errorf("gcs provider not configured")
 	}
 
-	// Get bucket and object
+	// Get bucket
 	bucket := p.client.Bucket(request.Bucket)
-	obj := bucket.Object(request.Key)
 
 	// Generate signed URL
 	opts := &storage.SignedURLOptions{
@@ -484,10 +484,15 @@ func (p *Provider) GeneratePresignedURL(ctx context.Context, request *gateway.Pr
 
 	// Add headers if specified
 	if request.Headers != nil {
-		opts.Headers = request.Headers
+		// Convert map[string]string to []string for headers
+		headers := make([]string, 0, len(request.Headers)*2)
+		for key, value := range request.Headers {
+			headers = append(headers, key, value)
+		}
+		opts.Headers = headers
 	}
 
-	url, err := obj.SignedURL(opts)
+	url, err := bucket.SignedURL(request.Key, opts)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate presigned URL: %w", err)
 	}

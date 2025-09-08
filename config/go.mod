@@ -2,8 +2,14 @@ module github.com/anasamu/microservices-library-go/config
 
 go 1.21
 
-require (
-	github.com/anasamu/microservices-library-go/core v0.0.0
-)
+replace github.com/anasamu/microservices-library-go/config/gateway => ./gateway
 
-replace github.com/anasamu/microservices-library-go/core => ../core
+replace github.com/anasamu/microservices-library-go/config/types => ./types
+
+replace github.com/anasamu/microservices-library-go/config/providers/file => ./providers/file
+
+replace github.com/anasamu/microservices-library-go/config/providers/env => ./providers/env
+
+replace github.com/anasamu/microservices-library-go/config/providers/vault => ./providers/vault
+
+replace github.com/anasamu/microservices-library-go/config/providers/consul => ./providers/consul
