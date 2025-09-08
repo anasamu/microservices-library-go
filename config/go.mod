@@ -1,8 +1,9 @@
-module github.com/siakad/microservices/libs/config
+module github.com/anasamu/microservices-library-go/config
 
 go 1.21
 
 require (
-	github.com/hashicorp/vault/api v1.10.0
-	github.com/spf13/viper v1.17.0
+	github.com/anasamu/microservices-library-go/core v0.0.0
 )
+
+replace github.com/anasamu/microservices-library-go/core => ../core

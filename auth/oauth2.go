@@ -19,8 +19,8 @@ type OAuth2Manager struct {
 	logger  *logrus.Logger
 }
 
-// OAuth2Config holds OAuth2 configuration
-type OAuth2Config struct {
+// OAuth2ManagerConfig holds OAuth2 manager configuration
+type OAuth2ManagerConfig struct {
 	ClientID     string
 	ClientSecret string
 	RedirectURL  string
@@ -73,7 +73,7 @@ func NewOAuth2Manager(logger *logrus.Logger) *OAuth2Manager {
 }
 
 // RegisterProvider registers an OAuth2 provider
-func (om *OAuth2Manager) RegisterProvider(providerName string, config *OAuth2Config) error {
+func (om *OAuth2Manager) RegisterProvider(providerName string, config *OAuth2ManagerConfig) error {
 	oauth2Config := &oauth2.Config{
 		ClientID:     config.ClientID,
 		ClientSecret: config.ClientSecret,

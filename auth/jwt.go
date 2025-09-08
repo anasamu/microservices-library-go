@@ -7,6 +7,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -24,13 +25,67 @@ type JWTManager struct {
 	logger        *logrus.Logger
 }
 
-// JWTConfig holds JWT configuration
-type JWTConfig struct {
+// JWTManagerConfig holds JWT manager configuration
+type JWTManagerConfig struct {
 	SecretKey     string
 	AccessExpiry  time.Duration
 	RefreshExpiry time.Duration
 	Issuer        string
 	Audience      string
+	Algorithm     string
+	KeyID         string
+}
+
+// DefaultJWTConfig returns default JWT configuration with environment variable support
+func DefaultJWTConfig() *JWTManagerConfig {
+	accessExpiry := 15 * time.Minute
+	if val := os.Getenv("JWT_ACCESS_EXPIRY"); val != "" {
+		if duration, err := time.ParseDuration(val); err == nil {
+			accessExpiry = duration
+		}
+	}
+
+	refreshExpiry := 7 * 24 * time.Hour
+	if val := os.Getenv("JWT_REFRESH_EXPIRY"); val != "" {
+		if duration, err := time.ParseDuration(val); err == nil {
+			refreshExpiry = duration
+		}
+	}
+
+	secretKey := os.Getenv("JWT_SECRET_KEY")
+	if secretKey == "" {
+		secretKey = "default-secret-key-change-in-production"
+	}
+
+	issuer := os.Getenv("JWT_ISSUER")
+	if issuer == "" {
+		issuer = "microservices-library"
+	}
+
+	audience := os.Getenv("JWT_AUDIENCE")
+	if audience == "" {
+		audience = "microservices-clients"
+	}
+
+	algorithm := os.Getenv("JWT_ALGORITHM")
+	if algorithm == "" {
+		algorithm = "HS256"
+	}
+
+	keyID := os.Getenv("JWT_KEY_ID")
+	if keyID == "" {
+		keyID = "default-key-id"
+	}
+
+	return &JWTManagerConfig{
+		SecretKey:     secretKey,
+		AccessExpiry:  accessExpiry,
+		RefreshExpiry: refreshExpiry,
+		Issuer:        issuer,
+		Audience:      audience,
+		Algorithm:     algorithm,
+		KeyID:         keyID,
+	}
 }
 
 // JWTClaims represents JWT claims
@@ -53,7 +108,7 @@ type TokenPair struct {
 }
 
 // NewJWTManager creates a new JWT manager
-func NewJWTManager(config *JWTConfig, logger *logrus.Logger) *JWTManager {
+func NewJWTManager(config *JWTManagerConfig, logger *logrus.Logger) *JWTManager {
 	return &JWTManager{
 		secretKey:     []byte(config.SecretKey),
 		accessExpiry:  config.AccessExpiry,
