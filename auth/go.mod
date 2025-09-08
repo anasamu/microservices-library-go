@@ -1,4 +1,4 @@
-module github.com/microservices-library-go/libs/auth
+module github.com/anasamu/microservices-library-go/auth
 
 go 1.21
 

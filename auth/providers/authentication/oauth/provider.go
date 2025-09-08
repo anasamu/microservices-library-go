@@ -10,7 +10,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/facebook"
+	"golang.org/x/oauth2/github"
 	"golang.org/x/oauth2/google"
+	"golang.org/x/oauth2/linkedin"
 	"golang.org/x/oauth2/microsoft"
 )
 
@@ -69,6 +72,34 @@ func DefaultOAuthConfig() map[string]*OAuthConfig {
 			Scopes:       []string{"openid", "profile", "email"},
 			Provider:     "microsoft",
 		},
+		"github": {
+			ClientID:     "",
+			ClientSecret: "",
+			RedirectURL:  "http://localhost:8080/auth/callback/github",
+			Scopes:       []string{"openid", "profile", "email"},
+			Provider:     "github",
+		},
+		"linkedin": {
+			ClientID:     "",
+			ClientSecret: "",
+			RedirectURL:  "http://localhost:8080/auth/callback/linkedin",
+			Scopes:       []string{"openid", "profile", "email"},
+			Provider:     "linkedin",
+		},
+		"twitter": {
+			ClientID:     "",
+			ClientSecret: "",
+			RedirectURL:  "http://localhost:8080/auth/callback/twitter",
+			Scopes:       []string{"openid", "profile", "email"},
+			Provider:     "twitter",
+		},
+		"facebook": {
+			ClientID:     "",
+			ClientSecret: "",
+			RedirectURL:  "http://localhost:8080/auth/callback/facebook",
+			Scopes:       []string{"openid", "profile", "email"},
+			Provider:     "facebook",
+		},
 	}
 }
 
@@ -110,6 +141,14 @@ func (op *OAuthProvider) createOAuth2Config(config *OAuthConfig) *oauth2.Config 
 		baseConfig.Endpoint = google.Endpoint
 	case "microsoft":
 		baseConfig.Endpoint = microsoft.AzureADEndpoint("common")
+	case "github":
+		baseConfig.Endpoint = github.Endpoint
+	case "linkedin":
+		baseConfig.Endpoint = linkedin.Endpoint
+	case "twitter":
+		baseConfig.Endpoint = twitter.Endpoint
+	case "facebook":
+		baseConfig.Endpoint = facebook.Endpoint
 	default:
 		// Custom provider - endpoints should be set manually
 		baseConfig.Endpoint = oauth2.Endpoint{}
@@ -129,6 +168,10 @@ func (op *OAuthProvider) GetSupportedFeatures() []string {
 		"oauth2",
 		"google_oauth",
 		"microsoft_oauth",
+		"github_oauth",
+		"linkedin_oauth",
+		"twitter_oauth",
+		"facebook_oauth",
 		"token_exchange",
 		"user_info",
 		"refresh_token",
@@ -287,6 +330,14 @@ func (op *OAuthProvider) getUserInfo(ctx context.Context, providerName, accessTo
 		userInfoURL = "https://www.googleapis.com/oauth2/v2/userinfo"
 	case "microsoft":
 		userInfoURL = "https://graph.microsoft.com/v1.0/me"
+	case "github":
+		userInfoURL = "https://api.github.com/user"
+	case "linkedin":
+		userInfoURL = "https://api.linkedin.com/v2/me"
+	case "twitter":
+		userInfoURL = "https://api.twitter.com/1.1/account/verify_credentials.json"
+	case "facebook":
+		userInfoURL = "https://graph.facebook.com/me"
 	default:
 		return nil, fmt.Errorf("unsupported OAuth provider: %s", providerName)
 	}
