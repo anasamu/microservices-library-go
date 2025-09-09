@@ -2,7 +2,12 @@ module github.com/anasamu/microservices-library-go/filegen/providers/excel
 
 go 1.21
 
-require github.com/xuri/excelize/v2 v2.8.0
+require (
+	github.com/anasamu/microservices-library-go/filegen/types v0.0.0
+	github.com/xuri/excelize/v2 v2.8.0
+)
+
+replace github.com/anasamu/microservices-library-go/filegen/types => ../../types
 
 require (
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect

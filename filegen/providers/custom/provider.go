@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 	"text/template"
+
+	"github.com/anasamu/microservices-library-go/filegen/types"
 )
 
 // Config contains configuration for the custom provider
@@ -47,10 +49,10 @@ func NewProvider(config *Config) (*Provider, error) {
 }
 
 // GenerateFile generates a custom file based on the request
-func (p *Provider) GenerateFile(ctx context.Context, req *FileRequest) (*FileResponse, error) {
+func (p *Provider) GenerateFile(ctx context.Context, req *types.FileRequest) (*types.FileResponse, error) {
 	content, err := p.generateContent(req)
 	if err != nil {
-		return &FileResponse{
+		return &types.FileResponse{
 			Success: false,
 			Error:   err.Error(),
 		}, err
@@ -59,7 +61,7 @@ func (p *Provider) GenerateFile(ctx context.Context, req *FileRequest) (*FileRes
 	// Determine MIME type based on format
 	mimeType := p.getMimeType(req.Options.Format)
 
-	return &FileResponse{
+	return &types.FileResponse{
 		Success:  true,
 		Content:  content,
 		MimeType: mimeType,
@@ -67,7 +69,7 @@ func (p *Provider) GenerateFile(ctx context.Context, req *FileRequest) (*FileRes
 }
 
 // GenerateFileToWriter generates a custom file and writes it to the provided writer
-func (p *Provider) GenerateFileToWriter(ctx context.Context, req *FileRequest, w io.Writer) error {
+func (p *Provider) GenerateFileToWriter(ctx context.Context, req *types.FileRequest, w io.Writer) error {
 	content, err := p.generateContent(req)
 	if err != nil {
 		return err
@@ -78,13 +80,13 @@ func (p *Provider) GenerateFileToWriter(ctx context.Context, req *FileRequest, w
 }
 
 // GetSupportedTypes returns the file types supported by this provider
-func (p *Provider) GetSupportedTypes() []FileType {
-	return []FileType{FileTypeCustom}
+func (p *Provider) GetSupportedTypes() []types.FileType {
+	return []types.FileType{types.FileTypeCustom}
 }
 
 // ValidateRequest validates the file generation request
-func (p *Provider) ValidateRequest(req *FileRequest) error {
-	if req.Type != FileTypeCustom {
+func (p *Provider) ValidateRequest(req *types.FileRequest) error {
+	if req.Type != types.FileTypeCustom {
 		return fmt.Errorf("unsupported file type: %s", req.Type)
 	}
 
@@ -105,7 +107,7 @@ func (p *Provider) GetTemplateList() ([]string, error) {
 }
 
 // generateContent generates the custom file content as bytes
-func (p *Provider) generateContent(req *FileRequest) ([]byte, error) {
+func (p *Provider) generateContent(req *types.FileRequest) ([]byte, error) {
 	// Use template if specified
 	if req.Template != "" {
 		return p.generateFromTemplate(req)
@@ -116,7 +118,7 @@ func (p *Provider) generateContent(req *FileRequest) ([]byte, error) {
 }
 
 // generateFromTemplate generates content using a template
-func (p *Provider) generateFromTemplate(req *FileRequest) ([]byte, error) {
+func (p *Provider) generateFromTemplate(req *types.FileRequest) ([]byte, error) {
 	tmpl, exists := p.templates[req.Template]
 	if !exists {
 		return nil, fmt.Errorf("template not found: %s", req.Template)
@@ -131,7 +133,7 @@ func (p *Provider) generateFromTemplate(req *FileRequest) ([]byte, error) {
 }
 
 // generateFromData generates content directly from data
-func (p *Provider) generateFromData(req *FileRequest) ([]byte, error) {
+func (p *Provider) generateFromData(req *types.FileRequest) ([]byte, error) {
 	format := req.Options.Format
 	if format == "" {
 		format = p.config.DefaultFormat
@@ -399,7 +401,7 @@ func (p *Provider) Close() error {
 	return nil
 }
 
-// FileRequest and FileResponse are imported from the gateway package
+// types.FileRequest and types.FileResponse are imported from the gateway package
 // We need to define them here or import them properly
 type FileRequest struct {
 	Type       string                 `json:"type"`

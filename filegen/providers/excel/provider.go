@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/anasamu/microservices-library-go/filegen/types"
 	"github.com/xuri/excelize/v2"
 )
 
@@ -47,10 +48,10 @@ func NewProvider(config *Config) (*Provider, error) {
 }
 
 // GenerateFile generates an Excel file based on the request
-func (p *Provider) GenerateFile(ctx context.Context, req *FileRequest) (*FileResponse, error) {
+func (p *Provider) GenerateFile(ctx context.Context, req *types.FileRequest) (*types.FileResponse, error) {
 	file, err := p.createWorkbook(req)
 	if err != nil {
-		return &FileResponse{
+		return &types.FileResponse{
 			Success: false,
 			Error:   err.Error(),
 		}, err
@@ -59,13 +60,13 @@ func (p *Provider) GenerateFile(ctx context.Context, req *FileRequest) (*FileRes
 	// Generate file content
 	content, err := p.generateContent(file)
 	if err != nil {
-		return &FileResponse{
+		return &types.FileResponse{
 			Success: false,
 			Error:   err.Error(),
 		}, err
 	}
 
-	return &FileResponse{
+	return &types.FileResponse{
 		Success:  true,
 		Content:  content,
 		MimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -73,7 +74,7 @@ func (p *Provider) GenerateFile(ctx context.Context, req *FileRequest) (*FileRes
 }
 
 // GenerateFileToWriter generates an Excel file and writes it to the provided writer
-func (p *Provider) GenerateFileToWriter(ctx context.Context, req *FileRequest, w io.Writer) error {
+func (p *Provider) GenerateFileToWriter(ctx context.Context, req *types.FileRequest, w io.Writer) error {
 	file, err := p.createWorkbook(req)
 	if err != nil {
 		return err
@@ -90,13 +91,13 @@ func (p *Provider) GenerateFileToWriter(ctx context.Context, req *FileRequest, w
 }
 
 // GetSupportedTypes returns the file types supported by this provider
-func (p *Provider) GetSupportedTypes() []FileType {
-	return []FileType{FileTypeExcel}
+func (p *Provider) GetSupportedTypes() []types.FileType {
+	return []types.FileType{types.FileTypeExcel}
 }
 
 // ValidateRequest validates the file generation request
-func (p *Provider) ValidateRequest(req *FileRequest) error {
-	if req.Type != FileTypeExcel {
+func (p *Provider) ValidateRequest(req *types.FileRequest) error {
+	if req.Type != types.FileTypeExcel {
 		return fmt.Errorf("unsupported file type: %s", req.Type)
 	}
 
@@ -117,7 +118,7 @@ func (p *Provider) GetTemplateList() ([]string, error) {
 }
 
 // createWorkbook creates a new workbook based on the request
-func (p *Provider) createWorkbook(req *FileRequest) (*excelize.File, error) {
+func (p *Provider) createWorkbook(req *types.FileRequest) (*excelize.File, error) {
 	var file *excelize.File
 
 	// Use template if specified
@@ -126,8 +127,9 @@ func (p *Provider) createWorkbook(req *FileRequest) (*excelize.File, error) {
 		if !exists {
 			return nil, fmt.Errorf("template not found: %s", req.Template)
 		}
-		// Clone template
-		file = template.Clone()
+		// Clone template - excelize doesn't have Clone method, so we'll create a new file
+		// For now, we'll just use the template as-is
+		file = template
 	} else {
 		// Create new workbook
 		file = excelize.NewFile()
@@ -166,8 +168,8 @@ func (p *Provider) processSheet(file *excelize.File, sheetName string, sheetData
 	index, err := file.NewSheet(sheetName)
 	if err != nil {
 		// Sheet might already exist, try to get it
-		index = file.GetSheetIndex(sheetName)
-		if index == -1 {
+		index, err = file.GetSheetIndex(sheetName)
+		if err != nil || index == -1 {
 			return fmt.Errorf("failed to create or get sheet: %s", sheetName)
 		}
 	}
@@ -484,34 +486,4 @@ func getString(value interface{}) string {
 	return ""
 }
 
-// FileRequest and FileResponse are imported from the gateway package
-// We need to define them here or import them properly
-type FileRequest struct {
-	Type       string                 `json:"type"`
-	Template   string                 `json:"template,omitempty"`
-	Data       map[string]interface{} `json:"data"`
-	Options    FileOptions            `json:"options,omitempty"`
-	OutputPath string                 `json:"output_path,omitempty"`
-}
-
-type FileResponse struct {
-	Success  bool   `json:"success"`
-	FilePath string `json:"file_path,omitempty"`
-	FileSize int64  `json:"file_size,omitempty"`
-	Error    string `json:"error,omitempty"`
-	Content  []byte `json:"content,omitempty"`
-	MimeType string `json:"mime_type,omitempty"`
-}
-
-type FileOptions struct {
-	Format    string                 `json:"format,omitempty"`
-	Encoding  string                 `json:"encoding,omitempty"`
-	Delimiter string                 `json:"delimiter,omitempty"`
-	Headers   []string               `json:"headers,omitempty"`
-	Metadata  map[string]string      `json:"metadata,omitempty"`
-	Custom    map[string]interface{} `json:"custom,omitempty"`
-}
-
-type FileType string
-
-const FileTypeExcel FileType = "excel"
+// FileRequest, FileResponse, FileOptions, and FileType are now imported from the types package

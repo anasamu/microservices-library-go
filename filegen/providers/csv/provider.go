@@ -8,6 +8,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/anasamu/microservices-library-go/filegen/types"
 )
 
 // Config contains configuration for the CSV provider
@@ -47,16 +49,16 @@ func NewProvider(config *Config) (*Provider, error) {
 }
 
 // GenerateFile generates a CSV file based on the request
-func (p *Provider) GenerateFile(ctx context.Context, req *FileRequest) (*FileResponse, error) {
+func (p *Provider) GenerateFile(ctx context.Context, req *types.FileRequest) (*types.FileResponse, error) {
 	content, err := p.generateContent(req)
 	if err != nil {
-		return &FileResponse{
+		return &types.FileResponse{
 			Success: false,
 			Error:   err.Error(),
 		}, err
 	}
 
-	return &FileResponse{
+	return &types.FileResponse{
 		Success:  true,
 		Content:  content,
 		MimeType: "text/csv",
@@ -64,7 +66,7 @@ func (p *Provider) GenerateFile(ctx context.Context, req *FileRequest) (*FileRes
 }
 
 // GenerateFileToWriter generates a CSV file and writes it to the provided writer
-func (p *Provider) GenerateFileToWriter(ctx context.Context, req *FileRequest, w io.Writer) error {
+func (p *Provider) GenerateFileToWriter(ctx context.Context, req *types.FileRequest, w io.Writer) error {
 	content, err := p.generateContent(req)
 	if err != nil {
 		return err
@@ -75,13 +77,13 @@ func (p *Provider) GenerateFileToWriter(ctx context.Context, req *FileRequest, w
 }
 
 // GetSupportedTypes returns the file types supported by this provider
-func (p *Provider) GetSupportedTypes() []FileType {
-	return []FileType{FileTypeCSV}
+func (p *Provider) GetSupportedTypes() []types.FileType {
+	return []types.FileType{types.FileTypeCSV}
 }
 
 // ValidateRequest validates the file generation request
-func (p *Provider) ValidateRequest(req *FileRequest) error {
-	if req.Type != FileTypeCSV {
+func (p *Provider) ValidateRequest(req *types.FileRequest) error {
+	if req.Type != types.FileTypeCSV {
 		return fmt.Errorf("unsupported file type: %s", req.Type)
 	}
 
@@ -102,7 +104,7 @@ func (p *Provider) GetTemplateList() ([]string, error) {
 }
 
 // generateContent generates the CSV content as bytes
-func (p *Provider) generateContent(req *FileRequest) ([]byte, error) {
+func (p *Provider) generateContent(req *types.FileRequest) ([]byte, error) {
 	// Create a buffer to write CSV data
 	var buf strings.Builder
 	writer := csv.NewWriter(&buf)
@@ -115,7 +117,7 @@ func (p *Provider) generateContent(req *FileRequest) ([]byte, error) {
 	writer.Comma = delimiter
 
 	// Process data
-	if err := p.processData(writer, req.Data); err != nil {
+	if err := p.processData(writer, req.Data, req.Template); err != nil {
 		return nil, fmt.Errorf("failed to process data: %w", err)
 	}
 
@@ -129,7 +131,7 @@ func (p *Provider) generateContent(req *FileRequest) ([]byte, error) {
 }
 
 // processData processes the data and writes it to the CSV writer
-func (p *Provider) processData(writer *csv.Writer, data map[string]interface{}) error {
+func (p *Provider) processData(writer *csv.Writer, data map[string]interface{}, templateName string) error {
 	// Process headers
 	if headers, ok := data["headers"].([]interface{}); ok {
 		headerStrings := make([]string, len(headers))
@@ -215,8 +217,8 @@ func (p *Provider) processData(writer *csv.Writer, data map[string]interface{}) 
 	}
 
 	// Process template data
-	if req.Template != "" {
-		if template, exists := p.templates[req.Template]; exists {
+	if templateName != "" {
+		if template, exists := p.templates[templateName]; exists {
 			for _, row := range template {
 				// Split template row by delimiter
 				fields := strings.Split(row, string(p.config.DefaultDelimiter))
@@ -293,34 +295,4 @@ func (p *Provider) Close() error {
 	return nil
 }
 
-// FileRequest and FileResponse are imported from the gateway package
-// We need to define them here or import them properly
-type FileRequest struct {
-	Type       string                 `json:"type"`
-	Template   string                 `json:"template,omitempty"`
-	Data       map[string]interface{} `json:"data"`
-	Options    FileOptions            `json:"options,omitempty"`
-	OutputPath string                 `json:"output_path,omitempty"`
-}
-
-type FileResponse struct {
-	Success  bool   `json:"success"`
-	FilePath string `json:"file_path,omitempty"`
-	FileSize int64  `json:"file_size,omitempty"`
-	Error    string `json:"error,omitempty"`
-	Content  []byte `json:"content,omitempty"`
-	MimeType string `json:"mime_type,omitempty"`
-}
-
-type FileOptions struct {
-	Format    string                 `json:"format,omitempty"`
-	Encoding  string                 `json:"encoding,omitempty"`
-	Delimiter string                 `json:"delimiter,omitempty"`
-	Headers   []string               `json:"headers,omitempty"`
-	Metadata  map[string]string      `json:"metadata,omitempty"`
-	Custom    map[string]interface{} `json:"custom,omitempty"`
-}
-
-type FileType string
-
-const FileTypeCSV FileType = "csv"
+// FileRequest, FileResponse, FileOptions, and FileType are now imported from the types package

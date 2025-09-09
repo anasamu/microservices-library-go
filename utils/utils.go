@@ -445,69 +445,69 @@ func (fu *FileUtils) FormatFileSize(size int64) string {
 	return fmt.Sprintf("%.1f %cB", float64(size)/float64(div), "KMGTPE"[exp])
 }
 
-// Global utility functions for backward compatibility
+// Global utility instances for backward compatibility
 var (
-	StringUtils     = NewStringUtils()
-	ValidationUtils = NewValidationUtils()
-	CryptoUtils     = NewCryptoUtils()
-	TimeUtils       = NewTimeUtils()
-	UUIDUtils       = NewUUIDUtils()
-	FileUtils       = NewFileUtils()
+	StringUtilsInstance     = NewStringUtils()
+	ValidationUtilsInstance = NewValidationUtils()
+	CryptoUtilsInstance     = NewCryptoUtils()
+	TimeUtilsInstance       = NewTimeUtils()
+	UUIDUtilsInstance       = NewUUIDUtils()
+	FileUtilsInstance       = NewFileUtils()
 )
 
 // Convenience functions
 func IsEmpty(s string) bool {
-	return StringUtils.IsEmpty(s)
+	return StringUtilsInstance.IsEmpty(s)
 }
 
 func IsNotEmpty(s string) bool {
-	return StringUtils.IsNotEmpty(s)
+	return StringUtilsInstance.IsNotEmpty(s)
 }
 
 func IsValidEmail(email string) bool {
-	return ValidationUtils.IsValidEmail(email)
+	return ValidationUtilsInstance.IsValidEmail(email)
 }
 
 func IsValidPhone(phone string) bool {
-	return ValidationUtils.IsValidPhone(phone)
+	return ValidationUtilsInstance.IsValidPhone(phone)
 }
 
 func IsValidURL(url string) bool {
-	return ValidationUtils.IsValidURL(url)
+	return ValidationUtilsInstance.IsValidURL(url)
 }
 
 func IsValidUUID(uuidStr string) bool {
-	return ValidationUtils.IsValidUUID(uuidStr)
+	return ValidationUtilsInstance.IsValidUUID(uuidStr)
 }
 
 func IsValidPassword(password string) bool {
-	return ValidationUtils.IsValidPassword(password)
+	return ValidationUtilsInstance.IsValidPassword(password)
 }
 
 func HashPassword(password string) (string, error) {
-	return CryptoUtils.HashPassword(password)
+	return CryptoUtilsInstance.HashPassword(password)
 }
 
 func VerifyPassword(password, hash string) bool {
-	return CryptoUtils.VerifyPassword(password, hash)
+	return CryptoUtilsInstance.VerifyPassword(password, hash)
 }
 
 func GenerateHash(input string) string {
-	return CryptoUtils.GenerateHash(input)
+	return CryptoUtilsInstance.GenerateHash(input)
 }
 
 func Now() time.Time {
-	return TimeUtils.Now()
+	return TimeUtilsInstance.Now()
 }
 
 func NowUTC() time.Time {
-	return TimeUtils.NowUTC()
+	return TimeUtilsInstance.NowUTC()
 }
 
 func GenerateUUID() uuid.UUID {
-	return UUIDUtils.Generate()
+	return UUIDUtilsInstance.Generate()
 }
 
 func GenerateUUIDString() string {
-	return UUIDUtils.GenerateString()
+	return UUIDUtilsInstance.GenerateString()
 }

@@ -14,11 +14,12 @@ import (
 	docxProvider "github.com/anasamu/microservices-library-go/filegen/providers/docx"
 	excelProvider "github.com/anasamu/microservices-library-go/filegen/providers/excel"
 	pdfProvider "github.com/anasamu/microservices-library-go/filegen/providers/pdf"
+	"github.com/anasamu/microservices-library-go/filegen/types"
 )
 
 // Manager manages file generation providers
 type Manager struct {
-	providers map[FileType]FileProvider
+	providers map[types.FileType]types.FileProvider
 	mu        sync.RWMutex
 	config    *ManagerConfig
 }
@@ -28,7 +29,7 @@ type ManagerConfig struct {
 	TemplatePath string
 	OutputPath   string
 	MaxFileSize  int64
-	AllowedTypes []FileType
+	AllowedTypes []types.FileType
 }
 
 // NewManager creates a new file generation manager
@@ -38,12 +39,12 @@ func NewManager(config *ManagerConfig) (*Manager, error) {
 			TemplatePath: "./templates",
 			OutputPath:   "./output",
 			MaxFileSize:  100 * 1024 * 1024, // 100MB
-			AllowedTypes: []FileType{FileTypeDOCX, FileTypeExcel, FileTypeCSV, FileTypePDF, FileTypeCustom},
+			AllowedTypes: []types.FileType{types.FileTypeDOCX, types.FileTypeExcel, types.FileTypeCSV, types.FileTypePDF, types.FileTypeCustom},
 		}
 	}
 
 	manager := &Manager{
-		providers: make(map[FileType]FileProvider),
+		providers: make(map[types.FileType]types.FileProvider),
 		config:    config,
 	}
 
@@ -64,7 +65,7 @@ func (m *Manager) initializeProviders() error {
 	if err != nil {
 		return fmt.Errorf("failed to initialize DOCX provider: %w", err)
 	}
-	m.providers[FileTypeDOCX] = docx
+	m.providers[types.FileTypeDOCX] = docx
 
 	// Initialize Excel provider
 	excel, err := excelProvider.NewProvider(&excelProvider.Config{
@@ -73,7 +74,7 @@ func (m *Manager) initializeProviders() error {
 	if err != nil {
 		return fmt.Errorf("failed to initialize Excel provider: %w", err)
 	}
-	m.providers[FileTypeExcel] = excel
+	m.providers[types.FileTypeExcel] = excel
 
 	// Initialize CSV provider
 	csv, err := csvProvider.NewProvider(&csvProvider.Config{
@@ -82,7 +83,7 @@ func (m *Manager) initializeProviders() error {
 	if err != nil {
 		return fmt.Errorf("failed to initialize CSV provider: %w", err)
 	}
-	m.providers[FileTypeCSV] = csv
+	m.providers[types.FileTypeCSV] = csv
 
 	// Initialize PDF provider
 	pdf, err := pdfProvider.NewProvider(&pdfProvider.Config{
@@ -91,7 +92,7 @@ func (m *Manager) initializeProviders() error {
 	if err != nil {
 		return fmt.Errorf("failed to initialize PDF provider: %w", err)
 	}
-	m.providers[FileTypePDF] = pdf
+	m.providers[types.FileTypePDF] = pdf
 
 	// Initialize Custom provider
 	custom, err := customProvider.NewProvider(&customProvider.Config{
@@ -100,15 +101,15 @@ func (m *Manager) initializeProviders() error {
 	if err != nil {
 		return fmt.Errorf("failed to initialize Custom provider: %w", err)
 	}
-	m.providers[FileTypeCustom] = custom
+	m.providers[types.FileTypeCustom] = custom
 
 	return nil
 }
 
 // GenerateFile generates a file using the appropriate provider
-func (m *Manager) GenerateFile(ctx context.Context, req *FileRequest) (*FileResponse, error) {
+func (m *Manager) GenerateFile(ctx context.Context, req *types.FileRequest) (*types.FileResponse, error) {
 	if err := m.validateRequest(req); err != nil {
-		return &FileResponse{
+		return &types.FileResponse{
 			Success: false,
 			Error:   err.Error(),
 		}, err
@@ -119,7 +120,7 @@ func (m *Manager) GenerateFile(ctx context.Context, req *FileRequest) (*FileResp
 	m.mu.RUnlock()
 
 	if !exists {
-		return &FileResponse{
+		return &types.FileResponse{
 			Success: false,
 			Error:   fmt.Sprintf("unsupported file type: %s", req.Type),
 		}, fmt.Errorf("unsupported file type: %s", req.Type)
@@ -127,7 +128,7 @@ func (m *Manager) GenerateFile(ctx context.Context, req *FileRequest) (*FileResp
 
 	// Validate request with provider
 	if err := provider.ValidateRequest(req); err != nil {
-		return &FileResponse{
+		return &types.FileResponse{
 			Success: false,
 			Error:   err.Error(),
 		}, err
@@ -136,7 +137,7 @@ func (m *Manager) GenerateFile(ctx context.Context, req *FileRequest) (*FileResp
 	// Generate file
 	response, err := provider.GenerateFile(ctx, req)
 	if err != nil {
-		return &FileResponse{
+		return &types.FileResponse{
 			Success: false,
 			Error:   err.Error(),
 		}, err
@@ -145,7 +146,7 @@ func (m *Manager) GenerateFile(ctx context.Context, req *FileRequest) (*FileResp
 	// Save file if output path is specified
 	if req.OutputPath != "" {
 		if err := m.saveFile(response, req.OutputPath); err != nil {
-			return &FileResponse{
+			return &types.FileResponse{
 				Success: false,
 				Error:   fmt.Sprintf("failed to save file: %v", err),
 			}, err
@@ -157,7 +158,7 @@ func (m *Manager) GenerateFile(ctx context.Context, req *FileRequest) (*FileResp
 }
 
 // GenerateFileToWriter generates a file and writes it to the provided writer
-func (m *Manager) GenerateFileToWriter(ctx context.Context, req *FileRequest, w io.Writer) error {
+func (m *Manager) GenerateFileToWriter(ctx context.Context, req *types.FileRequest, w io.Writer) error {
 	if err := m.validateRequest(req); err != nil {
 		return err
 	}
@@ -178,19 +179,19 @@ func (m *Manager) GenerateFileToWriter(ctx context.Context, req *FileRequest, w 
 }
 
 // GetSupportedTypes returns all supported file types
-func (m *Manager) GetSupportedTypes() []FileType {
+func (m *Manager) GetSupportedTypes() []types.FileType {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	types := make([]FileType, 0, len(m.providers))
+	fileTypes := make([]types.FileType, 0, len(m.providers))
 	for fileType := range m.providers {
-		types = append(types, fileType)
+		fileTypes = append(fileTypes, fileType)
 	}
-	return types
+	return fileTypes
 }
 
 // GetProvider returns a specific provider by type
-func (m *Manager) GetProvider(fileType FileType) (FileProvider, error) {
+func (m *Manager) GetProvider(fileType types.FileType) (types.FileProvider, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
@@ -202,7 +203,7 @@ func (m *Manager) GetProvider(fileType FileType) (FileProvider, error) {
 }
 
 // GetTemplateList returns available templates for a specific file type
-func (m *Manager) GetTemplateList(fileType FileType) ([]string, error) {
+func (m *Manager) GetTemplateList(fileType types.FileType) ([]string, error) {
 	provider, err := m.GetProvider(fileType)
 	if err != nil {
 		return nil, err
@@ -211,35 +212,35 @@ func (m *Manager) GetTemplateList(fileType FileType) ([]string, error) {
 }
 
 // GetTemplateInfo returns detailed information about a template
-func (m *Manager) GetTemplateInfo(fileType FileType, templateName string) (*TemplateInfo, error) {
-	provider, err := m.GetProvider(fileType)
+func (m *Manager) GetTemplateInfo(fileType types.FileType, templateName string) (*types.TemplateInfo, error) {
+	_, err := m.GetProvider(fileType)
 	if err != nil {
 		return nil, err
 	}
 
 	// This would need to be implemented in each provider
 	// For now, return basic info
-	return &TemplateInfo{
+	return &types.TemplateInfo{
 		Name:        templateName,
 		Description: fmt.Sprintf("Template for %s files", fileType),
 		Type:        fileType,
-		Parameters:  []TemplateParam{},
+		Parameters:  []types.TemplateParam{},
 	}, nil
 }
 
 // validateRequest validates the file generation request
-func (m *Manager) validateRequest(req *FileRequest) error {
+func (m *Manager) validateRequest(req *types.FileRequest) error {
 	if req == nil {
-		return &FileGenerationError{
-			Type:    ErrorTypeValidation,
+		return &types.FileGenerationError{
+			Type:    types.ErrorTypeValidation,
 			Message: "request cannot be nil",
 			Code:    400,
 		}
 	}
 
 	if req.Type == "" {
-		return &FileGenerationError{
-			Type:    ErrorTypeValidation,
+		return &types.FileGenerationError{
+			Type:    types.ErrorTypeValidation,
 			Message: "file type is required",
 			Code:    400,
 		}
@@ -255,16 +256,16 @@ func (m *Manager) validateRequest(req *FileRequest) error {
 	}
 
 	if !allowed {
-		return &FileGenerationError{
-			Type:    ErrorTypeValidation,
+		return &types.FileGenerationError{
+			Type:    types.ErrorTypeValidation,
 			Message: fmt.Sprintf("file type %s is not allowed", req.Type),
 			Code:    403,
 		}
 	}
 
 	if req.Data == nil {
-		return &FileGenerationError{
-			Type:    ErrorTypeValidation,
+		return &types.FileGenerationError{
+			Type:    types.ErrorTypeValidation,
 			Message: "data is required",
 			Code:    400,
 		}
@@ -274,7 +275,7 @@ func (m *Manager) validateRequest(req *FileRequest) error {
 }
 
 // saveFile saves the generated file content to the specified path
-func (m *Manager) saveFile(response *FileResponse, outputPath string) error {
+func (m *Manager) saveFile(response *types.FileResponse, outputPath string) error {
 	// Create directory if it doesn't exist
 	dir := filepath.Dir(outputPath)
 	if err := os.MkdirAll(dir, 0755); err != nil {
@@ -297,15 +298,15 @@ func (m *Manager) saveFile(response *FileResponse, outputPath string) error {
 }
 
 // GetMimeType returns the MIME type for a given file type
-func (m *Manager) GetMimeType(fileType FileType) string {
+func (m *Manager) GetMimeType(fileType types.FileType) string {
 	switch fileType {
-	case FileTypeDOCX:
+	case types.FileTypeDOCX:
 		return "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-	case FileTypeExcel:
+	case types.FileTypeExcel:
 		return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-	case FileTypeCSV:
+	case types.FileTypeCSV:
 		return "text/csv"
-	case FileTypePDF:
+	case types.FileTypePDF:
 		return "application/pdf"
 	default:
 		return "application/octet-stream"
@@ -313,15 +314,15 @@ func (m *Manager) GetMimeType(fileType FileType) string {
 }
 
 // GetFileExtension returns the file extension for a given file type
-func (m *Manager) GetFileExtension(fileType FileType) string {
+func (m *Manager) GetFileExtension(fileType types.FileType) string {
 	switch fileType {
-	case FileTypeDOCX:
+	case types.FileTypeDOCX:
 		return ".docx"
-	case FileTypeExcel:
+	case types.FileTypeExcel:
 		return ".xlsx"
-	case FileTypeCSV:
+	case types.FileTypeCSV:
 		return ".csv"
-	case FileTypePDF:
+	case types.FileTypePDF:
 		return ".pdf"
 	default:
 		return ""

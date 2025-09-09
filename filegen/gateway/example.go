@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+
+	"github.com/anasamu/microservices-library-go/filegen/types"
 )
 
 // Example demonstrates how to use the file generation manager
@@ -14,7 +16,7 @@ func Example() {
 		TemplatePath: "./templates",
 		OutputPath:   "./output",
 		MaxFileSize:  100 * 1024 * 1024, // 100MB
-		AllowedTypes: []FileType{FileTypeDOCX, FileTypeExcel, FileTypeCSV, FileTypePDF},
+		AllowedTypes: []types.FileType{types.FileTypeDOCX, types.FileTypeExcel, types.FileTypeCSV, types.FileTypePDF},
 	}
 
 	// Initialize manager
@@ -28,8 +30,8 @@ func Example() {
 
 	// Example 1: Generate a CSV file
 	fmt.Println("=== CSV Generation Example ===")
-	csvRequest := &FileRequest{
-		Type: FileTypeCSV,
+	csvRequest := &types.FileRequest{
+		Type: types.FileTypeCSV,
 		Data: map[string]interface{}{
 			"headers": []string{"Name", "Age", "Email"},
 			"rows": [][]string{
@@ -38,7 +40,7 @@ func Example() {
 				{"Bob Johnson", "35", "bob@example.com"},
 			},
 		},
-		Options: FileOptions{
+		Options: types.FileOptions{
 			Delimiter: ",",
 		},
 		OutputPath: "./output/example.csv",
@@ -54,8 +56,8 @@ func Example() {
 
 	// Example 2: Generate an Excel file
 	fmt.Println("\n=== Excel Generation Example ===")
-	excelRequest := &FileRequest{
-		Type: FileTypeExcel,
+	excelRequest := &types.FileRequest{
+		Type: types.FileTypeExcel,
 		Data: map[string]interface{}{
 			"sheets": map[string]interface{}{
 				"Employees": map[string]interface{}{
@@ -89,8 +91,8 @@ func Example() {
 
 	// Example 3: Generate a DOCX file
 	fmt.Println("\n=== DOCX Generation Example ===")
-	docxRequest := &FileRequest{
-		Type: FileTypeDOCX,
+	docxRequest := &types.FileRequest{
+		Type: types.FileTypeDOCX,
 		Data: map[string]interface{}{
 			"title": "Monthly Report",
 			"content": []map[string]interface{}{
@@ -132,8 +134,8 @@ func Example() {
 
 	// Example 4: Generate a PDF file
 	fmt.Println("\n=== PDF Generation Example ===")
-	pdfRequest := &FileRequest{
-		Type: FileTypePDF,
+	pdfRequest := &types.FileRequest{
+		Type: types.FileTypePDF,
 		Data: map[string]interface{}{
 			"title": "Invoice #INV-001",
 			"content": []map[string]interface{}{
@@ -209,7 +211,7 @@ func Example() {
 
 	// Example 7: Error handling
 	fmt.Println("\n=== Error Handling Example ===")
-	invalidRequest := &FileRequest{
+	invalidRequest := &types.FileRequest{
 		Type: "invalid_type",
 		Data: map[string]interface{}{},
 	}
@@ -246,8 +248,8 @@ func ExampleWithTemplates() {
 	ctx := context.Background()
 
 	// Example using a template
-	templateRequest := &FileRequest{
-		Type:     FileTypeDOCX,
+	templateRequest := &types.FileRequest{
+		Type:     types.FileTypeDOCX,
 		Template: "report",
 		Data: map[string]interface{}{
 			"company_name": "Acme Corp",
@@ -290,9 +292,9 @@ func ExampleBatchGeneration() {
 	ctx := context.Background()
 
 	// Batch generation requests
-	requests := []*FileRequest{
+	requests := []*types.FileRequest{
 		{
-			Type: FileTypeCSV,
+			Type: types.FileTypeCSV,
 			Data: map[string]interface{}{
 				"headers": []string{"Product", "Price", "Stock"},
 				"rows": [][]string{
@@ -304,7 +306,7 @@ func ExampleBatchGeneration() {
 			OutputPath: "./output/products.csv",
 		},
 		{
-			Type: FileTypeExcel,
+			Type: types.FileTypeExcel,
 			Data: map[string]interface{}{
 				"sheets": map[string]interface{}{
 					"Products": map[string]interface{}{

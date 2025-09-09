@@ -3,6 +3,7 @@ module github.com/anasamu/microservices-library-go/filegen/gateway
 go 1.21
 
 require (
+	github.com/anasamu/microservices-library-go/filegen/types v0.0.0
 	github.com/anasamu/microservices-library-go/filegen/providers/csv v0.0.0
 	github.com/anasamu/microservices-library-go/filegen/providers/custom v0.0.0
 	github.com/anasamu/microservices-library-go/filegen/providers/docx v0.0.0
@@ -24,6 +25,7 @@ require (
 )
 
 replace (
+	github.com/anasamu/microservices-library-go/filegen/types => ../types
 	github.com/anasamu/microservices-library-go/filegen/providers/csv => ../providers/csv
 	github.com/anasamu/microservices-library-go/filegen/providers/custom => ../providers/custom
 	github.com/anasamu/microservices-library-go/filegen/providers/docx => ../providers/docx
