@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/anasamu/microservices-library-go/auth/types"
-	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
 
@@ -232,85 +231,6 @@ func (tp *TwoFAProvider) CheckPermission(ctx context.Context, request *types.Per
 	}, nil
 }
 
-// CreateUser creates a new user
-func (tp *TwoFAProvider) CreateUser(ctx context.Context, request *types.CreateUserRequest) (*types.CreateUserResponse, error) {
-	userID := uuid.New().String()
-	return &types.CreateUserResponse{
-		UserID:    userID,
-		Username:  request.Username,
-		Email:     request.Email,
-		CreatedAt: time.Now(),
-		Metadata:  request.Metadata,
-	}, nil
-}
-
-// GetUser retrieves a user
-func (tp *TwoFAProvider) GetUser(ctx context.Context, request *types.GetUserRequest) (*types.GetUserResponse, error) {
-	return &types.GetUserResponse{
-		UserID:      request.UserID,
-		Username:    request.Username,
-		Email:       request.Email,
-		Roles:       []string{"2fa-user"},
-		Permissions: []string{"2fa-access"},
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
-		Metadata:    request.Metadata,
-	}, nil
-}
-
-// UpdateUser updates an existing user
-func (tp *TwoFAProvider) UpdateUser(ctx context.Context, request *types.UpdateUserRequest) (*types.UpdateUserResponse, error) {
-	return &types.UpdateUserResponse{
-		UserID:    request.UserID,
-		UpdatedAt: time.Now(),
-		Metadata:  request.Metadata,
-	}, nil
-}
-
-// DeleteUser deletes a user
-func (tp *TwoFAProvider) DeleteUser(ctx context.Context, request *types.DeleteUserRequest) error {
-	tp.logger.WithField("user_id", request.UserID).Info("2FA user deleted")
-	return nil
-}
-
-// AssignRole assigns a role to a user
-func (tp *TwoFAProvider) AssignRole(ctx context.Context, request *types.AssignRoleRequest) error {
-	tp.logger.WithFields(logrus.Fields{
-		"user_id": request.UserID,
-		"role":    request.Role,
-	}).Info("2FA role assigned")
-	return nil
-}
-
-// RemoveRole removes a role from a user
-func (tp *TwoFAProvider) RemoveRole(ctx context.Context, request *types.RemoveRoleRequest) error {
-	tp.logger.WithFields(logrus.Fields{
-		"user_id": request.UserID,
-		"role":    request.Role,
-	}).Info("2FA role removed")
-	return nil
-}
-
-// GrantPermission grants a permission to a user
-func (tp *TwoFAProvider) GrantPermission(ctx context.Context, request *types.GrantPermissionRequest) error {
-	tp.logger.WithFields(logrus.Fields{
-		"user_id":    request.UserID,
-		"permission": request.Permission,
-		"resource":   request.Resource,
-	}).Info("2FA permission granted")
-	return nil
-}
-
-// RevokePermission revokes a permission from a user
-func (tp *TwoFAProvider) RevokePermission(ctx context.Context, request *types.RevokePermissionRequest) error {
-	tp.logger.WithFields(logrus.Fields{
-		"user_id":    request.UserID,
-		"permission": request.Permission,
-		"resource":   request.Resource,
-	}).Info("2FA permission revoked")
-	return nil
-}
-
 // HealthCheck performs health check
 func (tp *TwoFAProvider) HealthCheck(ctx context.Context) error {
 	if !tp.configured {
@@ -322,8 +242,6 @@ func (tp *TwoFAProvider) HealthCheck(ctx context.Context) error {
 // GetStats returns provider statistics
 func (tp *TwoFAProvider) GetStats(ctx context.Context) (*types.AuthStats, error) {
 	return &types.AuthStats{
-		TotalUsers:    30,
-		ActiveUsers:   15,
 		TotalLogins:   300,
 		FailedLogins:  3,
 		ActiveTokens:  15,

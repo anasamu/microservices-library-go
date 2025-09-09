@@ -1,0 +1,39 @@
+# Invoice {{.invoice_number}}
+
+**Date:** {{.invoice_date}}  
+**Due Date:** {{.due_date}}
+
+---
+
+## Bill To:
+{{.customer.name}}  
+{{.customer.address}}  
+{{.customer.city}}, {{.customer.state}} {{.customer.zip}}  
+{{.customer.email}}
+
+---
+
+## Items
+
+| Description | Quantity | Price | Total |
+|-------------|----------|-------|-------|
+{{range .items}}| {{.description}} | {{.quantity}} | ${{.price}} | ${{.total}} |
+{{end}}
+
+---
+
+## Summary
+
+**Subtotal:** ${{.subtotal}}  
+**Tax ({{.tax_rate}}%):** ${{.tax}}  
+**Total:** ${{.total}}
+
+---
+
+## Payment Terms
+
+{{.payment_terms}}
+
+---
+
+**Thank you for your business!**

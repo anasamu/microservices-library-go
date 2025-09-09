@@ -1,0 +1,14 @@
+This is a placeholder for a DOCX template file. In a real implementation, this would be an actual .docx file created with Microsoft Word or similar software.
+
+The template would contain:
+- Placeholder text for dynamic content
+- Styling and formatting
+- Tables and charts
+- Images and logos
+
+Example placeholders:
+{{.company_name}}
+{{.report_date}}
+{{.metrics.revenue}}
+{{.metrics.customers}}
+{{.metrics.growth}}

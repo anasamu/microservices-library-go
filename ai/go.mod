@@ -1,7 +1,7 @@
-module github.com/microservices-library-go/ai
+module github.com/anasamu/microservices-library-go/ai
 
 go 1.21
 
-replace github.com/microservices-library-go/ai/gateway => ./gateway
+replace github.com/anasamu/microservices-library-go/ai/gateway => ./gateway
 
-replace github.com/microservices-library-go/ai/types => ./types
+replace github.com/anasamu/microservices-library-go/ai/types => ./types

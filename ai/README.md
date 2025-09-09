@@ -25,7 +25,7 @@ A comprehensive Go library for integrating multiple AI providers into microservi
 ## Installation
 
 ```bash
-go get github.com/microservices-library-go/ai
+go get github.com/anasamu/microservices-library-go/ai
 ```
 
 ## Quick Start
@@ -41,8 +41,8 @@ import (
     "log"
     "time"
 
-    "github.com/microservices-library-go/ai/gateway"
-    "github.com/microservices-library-go/ai/types"
+    "github.com/anasamu/microservices-library-go/ai/gateway"
+    "github.com/anasamu/microservices-library-go/ai/types"
 )
 
 func main() {

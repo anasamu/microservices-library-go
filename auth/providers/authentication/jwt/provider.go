@@ -460,87 +460,6 @@ func (jp *JWTProvider) CheckPermission(ctx context.Context, request *types.Permi
 	}, nil
 }
 
-// CreateUser creates a new user
-func (jp *JWTProvider) CreateUser(ctx context.Context, request *types.CreateUserRequest) (*types.CreateUserResponse, error) {
-	userID := uuid.New()
-	return &types.CreateUserResponse{
-		UserID:    userID.String(),
-		Username:  request.Username,
-		Email:     request.Email,
-		CreatedAt: time.Now(),
-		Metadata:  request.Metadata,
-	}, nil
-}
-
-// GetUser retrieves a user
-func (jp *JWTProvider) GetUser(ctx context.Context, request *types.GetUserRequest) (*types.GetUserResponse, error) {
-	// Mock user retrieval - in real implementation, query user database
-	userID := uuid.New()
-	return &types.GetUserResponse{
-		UserID:      userID.String(),
-		Username:    request.Username,
-		Email:       request.Email,
-		Roles:       []string{"user"},
-		Permissions: []string{"read", "write"},
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
-		Metadata:    request.Metadata,
-	}, nil
-}
-
-// UpdateUser updates an existing user
-func (jp *JWTProvider) UpdateUser(ctx context.Context, request *types.UpdateUserRequest) (*types.UpdateUserResponse, error) {
-	return &types.UpdateUserResponse{
-		UserID:    request.UserID,
-		UpdatedAt: time.Now(),
-		Metadata:  request.Metadata,
-	}, nil
-}
-
-// DeleteUser deletes a user
-func (jp *JWTProvider) DeleteUser(ctx context.Context, request *types.DeleteUserRequest) error {
-	jp.logger.WithField("user_id", request.UserID).Info("User deleted")
-	return nil
-}
-
-// AssignRole assigns a role to a user
-func (jp *JWTProvider) AssignRole(ctx context.Context, request *types.AssignRoleRequest) error {
-	jp.logger.WithFields(logrus.Fields{
-		"user_id": request.UserID,
-		"role":    request.Role,
-	}).Info("Role assigned")
-	return nil
-}
-
-// RemoveRole removes a role from a user
-func (jp *JWTProvider) RemoveRole(ctx context.Context, request *types.RemoveRoleRequest) error {
-	jp.logger.WithFields(logrus.Fields{
-		"user_id": request.UserID,
-		"role":    request.Role,
-	}).Info("Role removed")
-	return nil
-}
-
-// GrantPermission grants a permission to a user
-func (jp *JWTProvider) GrantPermission(ctx context.Context, request *types.GrantPermissionRequest) error {
-	jp.logger.WithFields(logrus.Fields{
-		"user_id":    request.UserID,
-		"permission": request.Permission,
-		"resource":   request.Resource,
-	}).Info("Permission granted")
-	return nil
-}
-
-// RevokePermission revokes a permission from a user
-func (jp *JWTProvider) RevokePermission(ctx context.Context, request *types.RevokePermissionRequest) error {
-	jp.logger.WithFields(logrus.Fields{
-		"user_id":    request.UserID,
-		"permission": request.Permission,
-		"resource":   request.Resource,
-	}).Info("Permission revoked")
-	return nil
-}
-
 // HealthCheck performs health check
 func (jp *JWTProvider) HealthCheck(ctx context.Context) error {
 	return jp.healthCheckInternal(ctx)
@@ -550,8 +469,6 @@ func (jp *JWTProvider) HealthCheck(ctx context.Context) error {
 func (jp *JWTProvider) GetStats(ctx context.Context) (*types.AuthStats, error) {
 	stats := jp.getStatsInternal(ctx)
 	return &types.AuthStats{
-		TotalUsers:    100,
-		ActiveUsers:   50,
 		TotalLogins:   1000,
 		FailedLogins:  10,
 		ActiveTokens:  50,

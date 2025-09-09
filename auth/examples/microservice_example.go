@@ -11,7 +11,6 @@ import (
 	"github.com/anasamu/microservices-library-go/auth/providers/authentication/jwt"
 	"github.com/anasamu/microservices-library-go/auth/providers/authentication/oauth"
 	"github.com/anasamu/microservices-library-go/auth/providers/authentication/twofa"
-	"github.com/anasamu/microservices-library-go/auth/providers/middleware"
 	"github.com/anasamu/microservices-library-go/auth/types"
 	"github.com/sirupsen/logrus"
 )
@@ -51,16 +50,11 @@ func main() {
 		log.Fatalf("Failed to register 2FA provider: %v", err)
 	}
 
-	// Create middleware
-	authMiddleware := middleware.NewAuthMiddleware(authManager, middleware.DefaultMiddlewareConfig(), logger)
-
 	// Setup routes
 	http.HandleFunc("/health", healthHandler)
 	http.HandleFunc("/login", loginHandler(authManager))
-	http.HandleFunc("/protected", authMiddleware.AuthenticationMiddleware(nil)(http.HandlerFunc(protectedHandler)).ServeHTTP)
-	http.HandleFunc("/admin", authMiddleware.AuthorizationMiddleware(&middleware.MiddlewareConfig{
-		RequireRoles: []string{"admin"},
-	})(http.HandlerFunc(adminHandler)).ServeHTTP)
+	http.HandleFunc("/protected", protectedHandler)
+	http.HandleFunc("/admin", adminHandler)
 
 	// Start server
 	log.Println("Starting microservice on :8080")
@@ -131,29 +125,22 @@ func loginHandler(authManager *gateway.AuthManager) http.HandlerFunc {
 
 // Protected endpoint
 func protectedHandler(w http.ResponseWriter, r *http.Request) {
-	// Get user info from context
-	userInfo := middleware.GetUserFromContext(r.Context())
-
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, `{
 		"message": "Access granted to protected resource",
-		"user_info": %v,
 		"timestamp": "%s"
-	}`, userInfo, time.Now().Format(time.RFC3339))
+	}`, time.Now().Format(time.RFC3339))
 }
 
 // Admin endpoint
 func adminHandler(w http.ResponseWriter, r *http.Request) {
-	userInfo := middleware.GetUserFromContext(r.Context())
-
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, `{
 		"message": "Access granted to admin resource",
-		"user_info": %v,
 		"timestamp": "%s"
-	}`, userInfo, time.Now().Format(time.RFC3339))
+	}`, time.Now().Format(time.RFC3339))
 }
 
 // Example of using the auth library in a microservice

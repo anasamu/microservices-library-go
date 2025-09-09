@@ -8,10 +8,10 @@ A comprehensive, dynamic, and flexible authentication and authorization library 
 - **Multiple Authorization Models**: RBAC, ABAC, ACL
 - **Dynamic Configuration**: Runtime provider registration and configuration
 - **Microservice-Ready**: Built for distributed systems with service identification
-- **Middleware Support**: HTTP middleware for easy integration
 - **Comprehensive Logging**: Structured logging with context
 - **Health Monitoring**: Built-in health checks and statistics
 - **Type Safety**: Strong typing with comprehensive interfaces
+- **Focused Design**: Authentication and authorization only, no user management
 
 ## Architecture
 
@@ -24,11 +24,10 @@ auth/
 │   │   ├── jwt/      # JWT authentication provider
 │   │   ├── oauth/    # OAuth2 authentication provider
 │   │   └── twofa/    # Two-Factor Authentication provider
-│   ├── authorization/
-│   │   ├── rbac/     # Role-Based Access Control
-│   │   ├── abac/     # Attribute-Based Access Control
-│   │   └── acl/      # Access Control Lists
-│   └── middleware/   # HTTP middleware
+│   └── authorization/
+│       ├── rbac/     # Role-Based Access Control
+│       ├── abac/     # Attribute-Based Access Control
+│       └── acl/      # Access Control Lists
 └── examples/         # Usage examples
 ```
 
@@ -84,38 +83,6 @@ func main() {
 }
 ```
 
-### 3. HTTP Middleware Integration
-
-```go
-package main
-
-import (
-    "net/http"
-    
-    "github.com/anasamu/microservices-library-go/auth/providers/middleware"
-)
-
-func main() {
-    // Create middleware
-    authMiddleware := middleware.NewAuthMiddleware(authManager, nil, logger)
-    
-    // Setup protected routes
-    http.HandleFunc("/protected", 
-        authMiddleware.AuthenticationMiddleware(nil)(
-            http.HandlerFunc(protectedHandler),
-        ).ServeHTTP,
-    )
-    
-    // Setup admin routes
-    http.HandleFunc("/admin", 
-        authMiddleware.AuthorizationMiddleware(&middleware.MiddlewareConfig{
-            RequireRoles: []string{"admin"},
-        })(
-            http.HandlerFunc(adminHandler),
-        ).ServeHTTP,
-    )
-}
-```
 
 ## Configuration
 
@@ -355,7 +322,7 @@ if err != nil {
 See the `examples/` directory for complete working examples:
 
 - `microservice_example.go`: Complete microservice with authentication
-- HTTP middleware integration
+- Authentication and authorization integration
 - Multiple provider usage
 - Error handling patterns
 

@@ -37,18 +37,25 @@ Library ini mengikuti pola **Gateway Pattern** dengan struktur sebagai berikut:
 microservices-library-go/
 ├── ai/                    # AI/ML Services
 ├── auth/                  # Authentication & Authorization
+├── backup/                # Backup & Restore Services
 ├── cache/                 # Caching Services
+├── chaos/                 # Chaos Engineering
+├── circuitbreaker/        # Circuit Breaker & Resilience
 ├── communication/         # Communication Protocols
 ├── config/                # Configuration Management
 ├── database/              # Database Services
+├── discovery/             # Service Discovery
+├── event/                 # Event Sourcing
+├── failover/              # Failover & Load Balancing
+├── filegen/               # File Generation (DOCX, Excel, PDF, CSV)
 ├── logging/               # Logging Services
 ├── messaging/             # Message Queue Services
+├── middleware/            # Microservices Middleware
 ├── monitoring/            # Monitoring & Observability
 ├── payment/               # Payment Processing
 ├── ratelimit/             # Rate Limiting
-├── resilience/            # Circuit Breaker & Resilience
+├── scheduling/            # Task Scheduling
 ├── storage/               # Object Storage Services
-├── tracing/               # Distributed Tracing
 └── utils/                 # Utility Functions
 ```
 
@@ -74,6 +81,60 @@ Setiap modul mengikuti pola yang konsisten:
 - **Authorization Models**: RBAC, ABAC, ACL
 - **Session Management**: Token refresh, revocation
 - **Security Features**: Rate limiting, brute force protection
+
+### 💾 Backup & Restore Services
+- **Multiple Storage Providers**: AWS S3, Google Cloud Storage, Local File System
+- **Unified Interface**: Consistent API across all providers
+- **Metadata Management**: Rich metadata support with tags and descriptions
+- **Health Checks**: Built-in health monitoring for all providers
+
+### 🧪 Chaos Engineering
+- **Kubernetes Chaos**: Integration with Chaos Mesh for container orchestration chaos
+- **HTTP Chaos**: Network-level chaos for HTTP services (latency, errors, timeouts)
+- **Messaging Chaos**: Message queue chaos (delays, loss, reordering)
+- **Experiment Management**: Start, stop, and monitor chaos experiments
+
+### ⚡ Circuit Breaker & Resilience
+- **Multiple Providers**: Support for different circuit breaker implementations
+- **Fallback Support**: Automatic fallback execution when primary service fails
+- **Retry Logic**: Configurable retry mechanisms with exponential backoff
+- **State Management**: Real-time circuit breaker state monitoring
+
+### 🔍 Service Discovery
+- **Multi-Provider Support**: Consul, Kubernetes, etcd, and static configuration
+- **Unified Interface**: Single API for all service discovery operations
+- **Health Management**: Built-in health checking and status management
+- **Service Watching**: Real-time service change notifications
+
+### 📝 Event Sourcing
+- **Multi-Provider Support**: PostgreSQL, Kafka, NATS
+- **Event Sourcing**: Complete event sourcing implementation with snapshots
+- **Stream Management**: Create, delete, and manage event streams
+- **Batch Operations**: Efficient batch event processing
+
+### 🔄 Failover & Load Balancing
+- **Multiple Failover Strategies**: Round-robin, weighted, least connections, random, health-based
+- **Provider Support**: Consul and Kubernetes providers with extensible architecture
+- **Health Monitoring**: Built-in health checks and endpoint monitoring
+- **Circuit Breaker**: Automatic circuit breaker pattern implementation
+
+### 📄 File Generation
+- **Multiple File Formats**: DOCX, Excel, CSV, PDF, and custom formats
+- **Template Support**: Use pre-built templates for consistent document generation
+- **Flexible Data Input**: Support for various data structures and formats
+- **Custom Formatting**: Extensive formatting options for each file type
+
+### 🛡️ Microservices Middleware
+- **Multiple Middleware Providers**: Authentication, Logging, Monitoring, Rate Limiting, Circuit Breaker, Caching, Storage, Communication, Messaging, Chaos Engineering, Failover
+- **Unified Interface**: Consistent API across all middleware providers
+- **HTTP Middleware Support**: Easy integration with HTTP handlers
+- **Middleware Chains**: Compose multiple middleware into chains
+
+### ⏰ Task Scheduling
+- **Multi-Provider Support**: Cron, Redis, and other scheduling providers
+- **Flexible Scheduling**: Cron expressions, one-time tasks, and interval-based scheduling
+- **Task Management**: Create, update, cancel, and monitor tasks
+- **Retry Policy**: Configurable retry with various backoff strategies
 
 ### 💾 Storage Services
 - **Cloud Storage**: AWS S3, Google Cloud Storage, Azure Blob
@@ -273,6 +334,242 @@ func main() {
 }
 ```
 
+### Backup Services
+
+```go
+package main
+
+import (
+    "context"
+    "log"
+    "strings"
+    
+    "github.com/anasamu/microservices-library-go/backup/gateway"
+    "github.com/anasamu/microservices-library-go/backup/providers/s3"
+    "github.com/anasamu/microservices-library-go/backup/types"
+)
+
+func main() {
+    // Create backup manager
+    manager := gateway.NewBackupManager()
+    
+    // Set up S3 provider
+    config := &s3.S3Config{
+        Bucket: "my-backup-bucket",
+        Prefix: "backups/",
+        Region: "us-west-2",
+    }
+    provider, err := s3.NewS3Provider(config)
+    if err != nil {
+        log.Fatal(err)
+    }
+    manager.SetProvider(provider)
+    
+    // Create a backup
+    ctx := context.Background()
+    data := strings.NewReader("Important application data")
+    opts := &types.BackupOptions{
+        Compression: true,
+        Tags: map[string]string{
+            "environment": "production",
+        },
+        Description: "Production data backup",
+    }
+    
+    metadata, err := manager.CreateBackup(ctx, "app-backup", data, opts)
+    if err != nil {
+        log.Fatal(err)
+    }
+    
+    log.Printf("Backup created: %s", metadata.ID)
+}
+```
+
+### File Generation Services
+
+```go
+package main
+
+import (
+    "context"
+    "log"
+    
+    "github.com/anasamu/microservices-library-go/filegen/gateway"
+)
+
+func main() {
+    // Create manager
+    manager, err := gateway.NewManager(nil)
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer manager.Close()
+
+    ctx := context.Background()
+
+    // Generate Excel file
+    req := &gateway.FileRequest{
+        Type: gateway.FileTypeExcel,
+        Data: map[string]interface{}{
+            "sheets": map[string]interface{}{
+                "Employees": map[string]interface{}{
+                    "headers": []string{"ID", "Name", "Department", "Salary"},
+                    "rows": [][]interface{}{
+                        {1, "John Doe", "Engineering", 75000},
+                        {2, "Jane Smith", "Marketing", 65000},
+                    },
+                },
+            },
+        },
+        OutputPath: "./employees.xlsx",
+    }
+
+    response, err := manager.GenerateFile(ctx, req)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    if response.Success {
+        log.Printf("File generated successfully: %s", response.FilePath)
+    }
+}
+```
+
+### Service Discovery
+
+```go
+package main
+
+import (
+    "context"
+    "log"
+    "time"
+    
+    "github.com/anasamu/microservices-library-go/discovery/gateway"
+    "github.com/anasamu/microservices-library-go/discovery/providers/consul"
+    "github.com/anasamu/microservices-library-go/discovery/types"
+    "github.com/sirupsen/logrus"
+)
+
+func main() {
+    logger := logrus.New()
+    
+    // Create discovery manager
+    manager := gateway.NewDiscoveryManager(nil, logger)
+    
+    // Create and register Consul provider
+    consulConfig := &consul.ConsulConfig{
+        Address: "localhost:8500",
+        Timeout: 30 * time.Second,
+    }
+    
+    consulProvider, err := consul.NewConsulProvider(consulConfig, logger)
+    if err != nil {
+        log.Fatal(err)
+    }
+    
+    err = manager.RegisterProvider(consulProvider)
+    if err != nil {
+        log.Fatal(err)
+    }
+    
+    // Register a service
+    registration := &types.ServiceRegistration{
+        ID:       "web-service-1",
+        Name:     "web-service",
+        Address:  "192.168.1.100",
+        Port:     8080,
+        Protocol: "http",
+        Tags:     []string{"web", "api"},
+        Health:   types.HealthPassing,
+        TTL:      30 * time.Second,
+    }
+    
+    ctx := context.Background()
+    err = manager.RegisterService(ctx, registration)
+    if err != nil {
+        log.Fatal(err)
+    }
+    
+    log.Println("Service registered successfully")
+}
+```
+
+### Task Scheduling
+
+```go
+package main
+
+import (
+    "context"
+    "log"
+    "time"
+    
+    "github.com/anasamu/microservices-library-go/scheduling/gateway"
+    "github.com/anasamu/microservices-library-go/scheduling/providers/cron"
+    "github.com/anasamu/microservices-library-go/scheduling/types"
+    "github.com/sirupsen/logrus"
+)
+
+func main() {
+    logger := logrus.New()
+    
+    // Create scheduling manager
+    manager := gateway.NewSchedulingManager(nil, logger)
+    
+    // Create and register cron provider
+    cronConfig := &cron.CronConfig{
+        Timezone:    "UTC",
+        WithSeconds: false,
+    }
+    
+    cronProvider, err := cron.NewCronProvider(cronConfig, logger)
+    if err != nil {
+        log.Fatal(err)
+    }
+    
+    err = manager.RegisterProvider("cron", cronProvider)
+    if err != nil {
+        log.Fatal(err)
+    }
+    
+    // Schedule a task
+    task := &types.Task{
+        ID:          "daily-report",
+        Name:        "Daily Report Generation",
+        Description: "Generate daily sales report",
+        Schedule: &types.Schedule{
+            Type:     types.ScheduleTypeCron,
+            CronExpr: "0 9 * * *", // Every day at 9 AM
+        },
+        Handler: &types.TaskHandler{
+            Type: types.HandlerTypeHTTP,
+            HTTP: &types.HTTPHandler{
+                URL:    "http://api.example.com/reports/daily",
+                Method: "POST",
+                Headers: map[string]string{
+                    "Content-Type": "application/json",
+                },
+            },
+        },
+        RetryPolicy: &types.RetryPolicy{
+            MaxAttempts: 3,
+            Delay:       time.Minute,
+            Backoff:     types.BackoffTypeExponential,
+        },
+        Timeout: time.Minute * 5,
+    }
+    
+    ctx := context.Background()
+    result, err := manager.ScheduleTask(ctx, task, "cron")
+    if err != nil {
+        log.Fatal(err)
+    }
+    
+    log.Printf("Task scheduled successfully: %s", result.TaskID)
+}
+```
+
 ## 🧩 Komponen Library
 
 ### AI Services (`ai/`)
@@ -285,9 +582,24 @@ func main() {
 - **Authorization**: RBAC, ABAC, ACL
 - **Security**: Rate limiting, session management, audit logging
 
+### Backup (`backup/`)
+- **Providers**: AWS S3, Google Cloud Storage, Local File System
+- **Features**: Backup creation, restore, metadata management, health checks
+- **Storage**: Multiple storage backends with unified interface
+
 ### Cache (`cache/`)
 - **Providers**: Redis, Memcached, In-Memory
 - **Features**: TTL, eviction policies, clustering
+
+### Chaos Engineering (`chaos/`)
+- **Providers**: Kubernetes (Chaos Mesh), HTTP, Messaging
+- **Features**: Pod failure, network latency, CPU/memory stress, message delays
+- **Management**: Experiment lifecycle, monitoring, cleanup
+
+### Circuit Breaker (`circuitbreaker/`)
+- **Providers**: Custom, Gobreaker
+- **Features**: Circuit breaker pattern, retry logic, fallback support
+- **Monitoring**: State management, statistics, health checks
 
 ### Communication (`communication/`)
 - **Protocols**: HTTP, gRPC, WebSocket, GraphQL, SSE, QUIC
@@ -302,6 +614,26 @@ func main() {
 - **NoSQL**: MongoDB, Redis, Elasticsearch
 - **Features**: Connection pooling, migrations, transactions
 
+### Discovery (`discovery/`)
+- **Providers**: Consul, Kubernetes, etcd, Static
+- **Features**: Service registration, discovery, health management, watching
+- **Load Balancing**: Round-robin, weighted, least connections, random, hash-based
+
+### Event Sourcing (`event/`)
+- **Providers**: PostgreSQL, Kafka, NATS
+- **Features**: Event storage, stream management, snapshots, batch operations
+- **Patterns**: Event sourcing, CQRS, aggregate management
+
+### Failover (`failover/`)
+- **Providers**: Consul, Kubernetes
+- **Strategies**: Round-robin, weighted, least connections, random, health-based
+- **Features**: Health monitoring, circuit breaker, retry logic, load balancing
+
+### File Generation (`filegen/`)
+- **Formats**: DOCX, Excel, CSV, PDF, Custom (JSON, XML, YAML, HTML, Markdown)
+- **Features**: Template support, custom formatting, streaming, validation
+- **Providers**: Multiple format-specific providers
+
 ### Logging (`logging/`)
 - **Outputs**: Console, File, Elasticsearch
 - **Features**: Structured logging, log levels, correlation IDs
@@ -309,6 +641,11 @@ func main() {
 ### Messaging (`messaging/`)
 - **Queues**: Kafka, RabbitMQ, NATS, AWS SQS
 - **Features**: Event streaming, dead letter queues, partitioning
+
+### Middleware (`middleware/`)
+- **Providers**: Authentication, Logging, Monitoring, Rate Limiting, Circuit Breaker, Caching, Storage, Communication, Messaging, Chaos Engineering, Failover
+- **Features**: HTTP middleware, middleware chains, dynamic configuration
+- **Integration**: Easy integration with HTTP handlers
 
 ### Monitoring (`monitoring/`)
 - **Metrics**: Prometheus
@@ -319,6 +656,16 @@ func main() {
 ### Payment (`payment/`)
 - **Providers**: Stripe, PayPal, Midtrans, Xendit
 - **Features**: Payment processing, webhooks, refunds
+
+### Rate Limiting (`ratelimit/`)
+- **Algorithms**: Token bucket, sliding window, fixed window, leaky bucket
+- **Features**: Per-IP/user limiting, custom key extraction, burst handling
+- **Providers**: Multiple rate limiting implementations
+
+### Scheduling (`scheduling/`)
+- **Providers**: Cron, Redis
+- **Features**: Cron expressions, one-time tasks, interval scheduling, retry policies
+- **Handlers**: HTTP, Command, Function, Message handlers
 
 ### Storage (`storage/`)
 - **Cloud**: AWS S3, Google Cloud Storage, Azure Blob
@@ -399,6 +746,29 @@ JWT_SECRET=your-jwt-secret
 OAUTH_CLIENT_ID=your-oauth-client-id
 OAUTH_CLIENT_SECRET=your-oauth-client-secret
 
+# Backup Services
+BACKUP_S3_BUCKET=your-backup-bucket
+BACKUP_S3_REGION=us-west-2
+BACKUP_GCS_BUCKET=your-gcs-bucket
+
+# Service Discovery
+CONSUL_ADDRESS=localhost:8500
+CONSUL_TOKEN=your-consul-token
+KUBERNETES_CONFIG=/path/to/kubeconfig
+
+# Event Sourcing
+EVENT_POSTGRES_URL=postgres://user:pass@localhost/events
+EVENT_KAFKA_BROKERS=localhost:9092
+EVENT_NATS_URL=nats://localhost:4222
+
+# File Generation
+FILEGEN_TEMPLATE_PATH=./templates
+FILEGEN_OUTPUT_PATH=./output
+
+# Task Scheduling
+SCHEDULING_CRON_TIMEZONE=UTC
+SCHEDULING_REDIS_URL=redis://localhost:6379
+
 # Storage
 AWS_ACCESS_KEY_ID=your-aws-access-key
 AWS_SECRET_ACCESS_KEY=your-aws-secret-key
@@ -435,6 +805,42 @@ auth:
     oauth:
       client_id: "${OAUTH_CLIENT_ID}"
       client_secret: "${OAUTH_CLIENT_SECRET}"
+
+backup:
+  providers:
+    s3:
+      bucket: "${BACKUP_S3_BUCKET}"
+      region: "${BACKUP_S3_REGION}"
+    gcs:
+      bucket: "${BACKUP_GCS_BUCKET}"
+
+discovery:
+  providers:
+    consul:
+      address: "${CONSUL_ADDRESS}"
+      token: "${CONSUL_TOKEN}"
+    kubernetes:
+      config_path: "${KUBERNETES_CONFIG}"
+
+event:
+  providers:
+    postgresql:
+      url: "${EVENT_POSTGRES_URL}"
+    kafka:
+      brokers: "${EVENT_KAFKA_BROKERS}"
+    nats:
+      url: "${EVENT_NATS_URL}"
+
+filegen:
+  template_path: "${FILEGEN_TEMPLATE_PATH}"
+  output_path: "${FILEGEN_OUTPUT_PATH}"
+
+scheduling:
+  providers:
+    cron:
+      timezone: "${SCHEDULING_CRON_TIMEZONE}"
+    redis:
+      url: "${SCHEDULING_REDIS_URL}"
 
 storage:
   providers:

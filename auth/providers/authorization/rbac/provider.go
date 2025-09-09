@@ -557,85 +557,6 @@ func (rp *RBACProvider) CheckPermission(ctx context.Context, request *types.Perm
 	}, nil
 }
 
-// CreateUser creates a new user
-func (rp *RBACProvider) CreateUser(ctx context.Context, request *types.CreateUserRequest) (*types.CreateUserResponse, error) {
-	userID := uuid.New().String()
-	return &types.CreateUserResponse{
-		UserID:    userID,
-		Username:  request.Username,
-		Email:     request.Email,
-		CreatedAt: time.Now(),
-		Metadata:  request.Metadata,
-	}, nil
-}
-
-// GetUser retrieves a user
-func (rp *RBACProvider) GetUser(ctx context.Context, request *types.GetUserRequest) (*types.GetUserResponse, error) {
-	return &types.GetUserResponse{
-		UserID:      request.UserID,
-		Username:    request.Username,
-		Email:       request.Email,
-		Roles:       []string{"rbac-user"},
-		Permissions: []string{"rbac-access"},
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
-		Metadata:    request.Metadata,
-	}, nil
-}
-
-// UpdateUser updates an existing user
-func (rp *RBACProvider) UpdateUser(ctx context.Context, request *types.UpdateUserRequest) (*types.UpdateUserResponse, error) {
-	return &types.UpdateUserResponse{
-		UserID:    request.UserID,
-		UpdatedAt: time.Now(),
-		Metadata:  request.Metadata,
-	}, nil
-}
-
-// DeleteUser deletes a user
-func (rp *RBACProvider) DeleteUser(ctx context.Context, request *types.DeleteUserRequest) error {
-	rp.logger.WithField("user_id", request.UserID).Info("RBAC user deleted")
-	return nil
-}
-
-// AssignRole assigns a role to a user
-func (rp *RBACProvider) AssignRole(ctx context.Context, request *types.AssignRoleRequest) error {
-	rp.logger.WithFields(logrus.Fields{
-		"user_id": request.UserID,
-		"role":    request.Role,
-	}).Info("RBAC role assigned")
-	return nil
-}
-
-// RemoveRole removes a role from a user
-func (rp *RBACProvider) RemoveRole(ctx context.Context, request *types.RemoveRoleRequest) error {
-	rp.logger.WithFields(logrus.Fields{
-		"user_id": request.UserID,
-		"role":    request.Role,
-	}).Info("RBAC role removed")
-	return nil
-}
-
-// GrantPermission grants a permission to a user
-func (rp *RBACProvider) GrantPermission(ctx context.Context, request *types.GrantPermissionRequest) error {
-	rp.logger.WithFields(logrus.Fields{
-		"user_id":    request.UserID,
-		"permission": request.Permission,
-		"resource":   request.Resource,
-	}).Info("RBAC permission granted")
-	return nil
-}
-
-// RevokePermission revokes a permission from a user
-func (rp *RBACProvider) RevokePermission(ctx context.Context, request *types.RevokePermissionRequest) error {
-	rp.logger.WithFields(logrus.Fields{
-		"user_id":    request.UserID,
-		"permission": request.Permission,
-		"resource":   request.Resource,
-	}).Info("RBAC permission revoked")
-	return nil
-}
-
 // HealthCheck performs health check
 func (rp *RBACProvider) HealthCheck(ctx context.Context) error {
 	if !rp.configured {
@@ -647,8 +568,6 @@ func (rp *RBACProvider) HealthCheck(ctx context.Context) error {
 // GetStats returns provider statistics
 func (rp *RBACProvider) GetStats(ctx context.Context) (*types.AuthStats, error) {
 	return &types.AuthStats{
-		TotalUsers:    int64(len(rp.roles)),
-		ActiveUsers:   int64(len(rp.roles)),
 		TotalLogins:   100,
 		FailedLogins:  5,
 		ActiveTokens:  50,

@@ -661,85 +661,6 @@ func (ap *ABACProvider) CheckPermission(ctx context.Context, request *types.Perm
 	}, nil
 }
 
-// CreateUser creates a new user
-func (ap *ABACProvider) CreateUser(ctx context.Context, request *types.CreateUserRequest) (*types.CreateUserResponse, error) {
-	userID := uuid.New().String()
-	return &types.CreateUserResponse{
-		UserID:    userID,
-		Username:  request.Username,
-		Email:     request.Email,
-		CreatedAt: time.Now(),
-		Metadata:  request.Metadata,
-	}, nil
-}
-
-// GetUser retrieves a user
-func (ap *ABACProvider) GetUser(ctx context.Context, request *types.GetUserRequest) (*types.GetUserResponse, error) {
-	return &types.GetUserResponse{
-		UserID:      request.UserID,
-		Username:    request.Username,
-		Email:       request.Email,
-		Roles:       []string{"abac-user"},
-		Permissions: []string{"abac-access"},
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
-		Metadata:    request.Metadata,
-	}, nil
-}
-
-// UpdateUser updates an existing user
-func (ap *ABACProvider) UpdateUser(ctx context.Context, request *types.UpdateUserRequest) (*types.UpdateUserResponse, error) {
-	return &types.UpdateUserResponse{
-		UserID:    request.UserID,
-		UpdatedAt: time.Now(),
-		Metadata:  request.Metadata,
-	}, nil
-}
-
-// DeleteUser deletes a user
-func (ap *ABACProvider) DeleteUser(ctx context.Context, request *types.DeleteUserRequest) error {
-	ap.logger.WithField("user_id", request.UserID).Info("ABAC user deleted")
-	return nil
-}
-
-// AssignRole assigns a role to a user
-func (ap *ABACProvider) AssignRole(ctx context.Context, request *types.AssignRoleRequest) error {
-	ap.logger.WithFields(logrus.Fields{
-		"user_id": request.UserID,
-		"role":    request.Role,
-	}).Info("ABAC role assigned")
-	return nil
-}
-
-// RemoveRole removes a role from a user
-func (ap *ABACProvider) RemoveRole(ctx context.Context, request *types.RemoveRoleRequest) error {
-	ap.logger.WithFields(logrus.Fields{
-		"user_id": request.UserID,
-		"role":    request.Role,
-	}).Info("ABAC role removed")
-	return nil
-}
-
-// GrantPermission grants a permission to a user
-func (ap *ABACProvider) GrantPermission(ctx context.Context, request *types.GrantPermissionRequest) error {
-	ap.logger.WithFields(logrus.Fields{
-		"user_id":    request.UserID,
-		"permission": request.Permission,
-		"resource":   request.Resource,
-	}).Info("ABAC permission granted")
-	return nil
-}
-
-// RevokePermission revokes a permission from a user
-func (ap *ABACProvider) RevokePermission(ctx context.Context, request *types.RevokePermissionRequest) error {
-	ap.logger.WithFields(logrus.Fields{
-		"user_id":    request.UserID,
-		"permission": request.Permission,
-		"resource":   request.Resource,
-	}).Info("ABAC permission revoked")
-	return nil
-}
-
 // HealthCheck performs health check
 func (ap *ABACProvider) HealthCheck(ctx context.Context) error {
 	if !ap.configured {
@@ -751,8 +672,6 @@ func (ap *ABACProvider) HealthCheck(ctx context.Context) error {
 // GetStats returns provider statistics
 func (ap *ABACProvider) GetStats(ctx context.Context) (*types.AuthStats, error) {
 	return &types.AuthStats{
-		TotalUsers:    int64(len(ap.policies)),
-		ActiveUsers:   int64(len(ap.policies)),
 		TotalLogins:   200,
 		FailedLogins:  10,
 		ActiveTokens:  100,

@@ -1,0 +1,18 @@
+This is a placeholder for an invoice DOCX template file.
+
+The template would contain:
+- Company header and logo
+- Invoice number and date
+- Customer information
+- Itemized billing table
+- Totals and payment terms
+
+Example placeholders:
+{{.invoice_number}}
+{{.invoice_date}}
+{{.customer.name}}
+{{.customer.address}}
+{{.items}}
+{{.subtotal}}
+{{.tax}}
+{{.total}}

@@ -1,0 +1,19 @@
+This is a placeholder for a data Excel template file.
+
+The template would contain:
+- Data entry forms
+- Validation rules
+- Dropdown lists
+- Conditional formatting
+- Protected cells
+
+Example structure:
+Sheet1: Data Entry
+- Form fields for data input
+- Validation and formatting
+- Auto-calculations
+
+Sheet2: Lookup Tables
+- Reference data
+- Categories and codes
+- Supporting information

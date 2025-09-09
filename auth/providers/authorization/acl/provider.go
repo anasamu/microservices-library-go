@@ -575,85 +575,6 @@ func (ap *ACLProvider) CheckPermission(ctx context.Context, request *types.Permi
 	}, nil
 }
 
-// CreateUser creates a new user
-func (ap *ACLProvider) CreateUser(ctx context.Context, request *types.CreateUserRequest) (*types.CreateUserResponse, error) {
-	userID := uuid.New().String()
-	return &types.CreateUserResponse{
-		UserID:    userID,
-		Username:  request.Username,
-		Email:     request.Email,
-		CreatedAt: time.Now(),
-		Metadata:  request.Metadata,
-	}, nil
-}
-
-// GetUser retrieves a user
-func (ap *ACLProvider) GetUser(ctx context.Context, request *types.GetUserRequest) (*types.GetUserResponse, error) {
-	return &types.GetUserResponse{
-		UserID:      request.UserID,
-		Username:    request.Username,
-		Email:       request.Email,
-		Roles:       []string{"acl-user"},
-		Permissions: []string{"acl-access"},
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
-		Metadata:    request.Metadata,
-	}, nil
-}
-
-// UpdateUser updates an existing user
-func (ap *ACLProvider) UpdateUser(ctx context.Context, request *types.UpdateUserRequest) (*types.UpdateUserResponse, error) {
-	return &types.UpdateUserResponse{
-		UserID:    request.UserID,
-		UpdatedAt: time.Now(),
-		Metadata:  request.Metadata,
-	}, nil
-}
-
-// DeleteUser deletes a user
-func (ap *ACLProvider) DeleteUser(ctx context.Context, request *types.DeleteUserRequest) error {
-	ap.logger.WithField("user_id", request.UserID).Info("ACL user deleted")
-	return nil
-}
-
-// AssignRole assigns a role to a user
-func (ap *ACLProvider) AssignRole(ctx context.Context, request *types.AssignRoleRequest) error {
-	ap.logger.WithFields(logrus.Fields{
-		"user_id": request.UserID,
-		"role":    request.Role,
-	}).Info("ACL role assigned")
-	return nil
-}
-
-// RemoveRole removes a role from a user
-func (ap *ACLProvider) RemoveRole(ctx context.Context, request *types.RemoveRoleRequest) error {
-	ap.logger.WithFields(logrus.Fields{
-		"user_id": request.UserID,
-		"role":    request.Role,
-	}).Info("ACL role removed")
-	return nil
-}
-
-// GrantPermission grants a permission to a user
-func (ap *ACLProvider) GrantPermission(ctx context.Context, request *types.GrantPermissionRequest) error {
-	ap.logger.WithFields(logrus.Fields{
-		"user_id":    request.UserID,
-		"permission": request.Permission,
-		"resource":   request.Resource,
-	}).Info("ACL permission granted")
-	return nil
-}
-
-// RevokePermission revokes a permission from a user
-func (ap *ACLProvider) RevokePermission(ctx context.Context, request *types.RevokePermissionRequest) error {
-	ap.logger.WithFields(logrus.Fields{
-		"user_id":    request.UserID,
-		"permission": request.Permission,
-		"resource":   request.Resource,
-	}).Info("ACL permission revoked")
-	return nil
-}
-
 // HealthCheck performs health check
 func (ap *ACLProvider) HealthCheck(ctx context.Context) error {
 	if !ap.configured {
@@ -665,8 +586,6 @@ func (ap *ACLProvider) HealthCheck(ctx context.Context) error {
 // GetStats returns provider statistics
 func (ap *ACLProvider) GetStats(ctx context.Context) (*types.AuthStats, error) {
 	return &types.AuthStats{
-		TotalUsers:    int64(len(ap.entries)),
-		ActiveUsers:   int64(len(ap.entries)),
 		TotalLogins:   150,
 		FailedLogins:  8,
 		ActiveTokens:  75,
