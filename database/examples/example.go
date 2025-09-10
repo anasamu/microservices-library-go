@@ -15,7 +15,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func main() {
+func mainBasic() {
 	// Create logger
 	logger := logrus.New()
 	logger.SetLevel(logrus.InfoLevel)
@@ -30,7 +30,7 @@ func main() {
 	databaseManager := gateway.NewDatabaseManager(config, logger)
 
 	// Register database providers
-	registerProviders(databaseManager, logger)
+	registerBasicProviders(databaseManager, logger)
 
 	// Example 1: Connect to PostgreSQL
 	examplePostgreSQLConnection(databaseManager)
@@ -60,8 +60,8 @@ func main() {
 	exampleDatabaseStats(databaseManager)
 }
 
-// registerProviders registers all database providers
-func registerProviders(databaseManager *gateway.DatabaseManager, logger *logrus.Logger) {
+// registerBasicProviders registers all database providers
+func registerBasicProviders(databaseManager *gateway.DatabaseManager, logger *logrus.Logger) {
 	// Register PostgreSQL provider
 	postgresProvider := postgresql.NewProvider(logger)
 	postgresConfig := map[string]interface{}{
