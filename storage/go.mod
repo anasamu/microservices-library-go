@@ -1,17 +1,20 @@
-module github.com/anasamu/microservices-library-go/libs/storage
+module github.com/anasamu/microservices-library-go/storage
 
 go 1.21
 
 require (
-	github.com/anasamu/microservices-library-go/libs/storage/gateway v0.0.0
-	github.com/anasamu/microservices-library-go/libs/storage/providers/minio v0.0.0
-	github.com/anasamu/microservices-library-go/libs/storage/providers/s3 v0.0.0
-	github.com/anasamu/microservices-library-go/libs/storage/providers/gcs v0.0.0
-	github.com/anasamu/microservices-library-go/libs/storage/providers/azure v0.0.0
+	github.com/google/uuid v1.6.0
+	github.com/sirupsen/logrus v1.9.3
 )
 
-replace github.com/anasamu/microservices-library-go/libs/storage/gateway => ./gateway
-replace github.com/anasamu/microservices-library-go/libs/storage/providers/minio => ./providers/minio
-replace github.com/anasamu/microservices-library-go/libs/storage/providers/s3 => ./providers/s3
-replace github.com/anasamu/microservices-library-go/libs/storage/providers/gcs => ./providers/gcs
-replace github.com/anasamu/microservices-library-go/libs/storage/providers/azure => ./providers/azure
+require golang.org/x/sys v0.15.0 // indirect
+
+replace github.com/anasamu/microservices-library-go/storage/providers/minio => ./providers/minio
+
+replace github.com/anasamu/microservices-library-go/storage/providers/s3 => ./providers/s3
+
+replace github.com/anasamu/microservices-library-go/storage/providers/gcs => ./providers/gcs
+
+replace github.com/anasamu/microservices-library-go/storage/providers/azure => ./providers/azure
+
+replace github.com/anasamu/microservices-library-go/storage/types => ./types

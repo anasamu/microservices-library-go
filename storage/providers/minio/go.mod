@@ -26,4 +26,3 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // indirect
 )
 
-replace github.com/anasamu/microservices-library-go/storage/gateway => ../../gateway

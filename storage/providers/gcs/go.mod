@@ -45,4 +45,3 @@ require (
 	google.golang.org/protobuf v1.31.0 // indirect
 )
 
-replace github.com/anasamu/microservices-library-go/storage/gateway => ../../gateway

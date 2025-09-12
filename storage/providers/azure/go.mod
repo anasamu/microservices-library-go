@@ -5,7 +5,7 @@ go 1.21
 require (
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.5.1
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.2.1
-	github.com/anasamu/microservices-library-go/storage/gateway v0.0.0
+	github.com/anasamu/microservices-library-go/storage/types v0.0.0
 	github.com/sirupsen/logrus v1.9.3
 )
 
@@ -23,4 +23,5 @@ require (
 	golang.org/x/text v0.14.0 // indirect
 )
 
-replace github.com/anasamu/microservices-library-go/storage/gateway => ../../gateway
+replace github.com/anasamu/microservices-library-go/storage/types => ../../types
+

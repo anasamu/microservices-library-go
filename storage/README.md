@@ -45,10 +45,6 @@ A comprehensive, modular, and production-ready storage library for Go microservi
 
 ```
 libs/storage/
-├── gateway/                    # Core storage gateway
-│   ├── manager.go             # Storage manager implementation
-│   ├── example.go             # Usage examples
-│   └── go.mod                 # Gateway dependencies
 ├── providers/                 # Storage provider implementations
 │   ├── s3/                    # AWS S3 provider
 │   │   ├── provider.go        # S3 implementation
@@ -63,6 +59,7 @@ libs/storage/
 │       ├── provider.go        # MinIO implementation
 │       └── go.mod             # MinIO dependencies
 ├── go.mod                     # Main module dependencies
+├── manager.go                 # core
 └── README.md                  # This file
 ```
 
@@ -111,7 +108,7 @@ import (
     "log"
     "strings"
     
-    "github.com/anasamu/microservices-library-go/libs/storage/gateway"
+    "github.com/anasamu/microservices-library-go/libs/storage"
     "github.com/anasamu/microservices-library-go/libs/storage/providers/s3"
     "github.com/sirupsen/logrus"
 )
@@ -359,7 +356,7 @@ go test ./providers/azure/...
 go test ./providers/minio/...
 
 # Run gateway tests
-go test ./gateway/...
+go test ./...
 ```
 
 ## 📚 API Documentation

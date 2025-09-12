@@ -6,7 +6,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/anasamu/microservices-library-go/storage/gateway"
+	"github.com/anasamu/microservices-library-go/storage"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/minio/minio-go/v7/pkg/encrypt"

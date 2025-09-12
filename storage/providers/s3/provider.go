@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/anasamu/microservices-library-go/storage/gateway"
+	"github.com/anasamu/microservices-library-go/storage"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	v4 "github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"

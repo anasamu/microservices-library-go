@@ -1,15 +1,17 @@
 package azure
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"strings"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/sas"
-	"github.com/anasamu/microservices-library-go/storage/gateway"
+	"github.com/anasamu/microservices-library-go/storage/types"
 	"github.com/sirupsen/logrus"
 )
 
@@ -34,15 +36,15 @@ func (p *Provider) GetName() string {
 }
 
 // GetSupportedFeatures returns supported features
-func (p *Provider) GetSupportedFeatures() []gateway.StorageFeature {
-	return []gateway.StorageFeature{
-		gateway.FeaturePresignedURLs,
-		gateway.FeaturePublicURLs,
-		gateway.FeatureMultipart,
-		gateway.FeatureVersioning,
-		gateway.FeatureEncryption,
-		gateway.FeatureLifecycle,
-		gateway.FeatureCORS,
+func (p *Provider) GetSupportedFeatures() []types.StorageFeature {
+	return []types.StorageFeature{
+		types.FeaturePresignedURLs,
+		types.FeaturePublicURLs,
+		types.FeatureMultipart,
+		types.FeatureVersioning,
+		types.FeatureEncryption,
+		types.FeatureLifecycle,
+		types.FeatureCORS,
 	}
 }
 
@@ -118,7 +120,7 @@ func (p *Provider) IsConfigured() bool {
 }
 
 // PutObject uploads an object to Azure Blob Storage
-func (p *Provider) PutObject(ctx context.Context, request *gateway.PutObjectRequest) (*gateway.PutObjectResponse, error) {
+func (p *Provider) PutObject(ctx context.Context, request *types.PutObjectRequest) (*types.PutObjectResponse, error) {
 	if !p.IsConfigured() {
 		return nil, fmt.Errorf("azure provider not configured")
 	}
@@ -142,12 +144,12 @@ func (p *Provider) PutObject(ctx context.Context, request *gateway.PutObjectRequ
 	}
 
 	// Upload blob
-	result, err := p.client.UploadStream(ctx, request.Bucket, request.Key, request.Content, options)
+	result, err := p.client.UploadStream(ctx, request.Bucket, request.Key, bytes.NewReader(request.Content), options)
 	if err != nil {
 		return nil, fmt.Errorf("failed to upload blob: %w", err)
 	}
 
-	response := &gateway.PutObjectResponse{
+	response := &types.PutObjectResponse{
 		Key:          request.Key,
 		ETag:         strings.Trim(string(*result.ETag), "\""),
 		Size:         request.Size,
@@ -166,7 +168,7 @@ func (p *Provider) PutObject(ctx context.Context, request *gateway.PutObjectRequ
 }
 
 // GetObject downloads an object from Azure Blob Storage
-func (p *Provider) GetObject(ctx context.Context, request *gateway.GetObjectRequest) (*gateway.GetObjectResponse, error) {
+func (p *Provider) GetObject(ctx context.Context, request *types.GetObjectRequest) (*types.GetObjectResponse, error) {
 	if !p.IsConfigured() {
 		return nil, fmt.Errorf("azure provider not configured")
 	}
@@ -206,8 +208,15 @@ func (p *Provider) GetObject(ctx context.Context, request *gateway.GetObjectRequ
 		}
 	}
 
-	response := &gateway.GetObjectResponse{
-		Content:      result.Body,
+	// Read the content from the response body
+	content, err := io.ReadAll(result.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+	result.Body.Close()
+
+	response := &types.GetObjectResponse{
+		Content:      content,
 		Size:         *result.ContentLength,
 		ContentType:  *result.ContentType,
 		ETag:         strings.Trim(string(*result.ETag), "\""),
@@ -222,7 +231,7 @@ func (p *Provider) GetObject(ctx context.Context, request *gateway.GetObjectRequ
 }
 
 // DeleteObject deletes an object from Azure Blob Storage
-func (p *Provider) DeleteObject(ctx context.Context, request *gateway.DeleteObjectRequest) error {
+func (p *Provider) DeleteObject(ctx context.Context, request *types.DeleteObjectRequest) error {
 	if !p.IsConfigured() {
 		return fmt.Errorf("azure provider not configured")
 	}
@@ -246,32 +255,32 @@ func (p *Provider) DeleteObject(ctx context.Context, request *gateway.DeleteObje
 }
 
 // DeleteObjects deletes multiple objects from Azure Blob Storage
-func (p *Provider) DeleteObjects(ctx context.Context, request *gateway.DeleteObjectsRequest) (*gateway.DeleteObjectsResponse, error) {
+func (p *Provider) DeleteObjects(ctx context.Context, request *types.DeleteObjectsRequest) (*types.DeleteObjectsResponse, error) {
 	if !p.IsConfigured() {
 		return nil, fmt.Errorf("azure provider not configured")
 	}
 
-	response := &gateway.DeleteObjectsResponse{
-		Deleted: make([]gateway.DeletedObject, 0, len(request.Keys)),
-		Errors:  make([]gateway.DeleteError, 0),
+	response := &types.DeleteObjectsResponse{
+		Deleted: make([]types.DeletedObject, 0, len(request.Keys)),
+		Errors:  make([]types.DeleteError, 0),
 	}
 
 	// Delete objects one by one
 	for _, key := range request.Keys {
-		deleteRequest := &gateway.DeleteObjectRequest{
+		deleteRequest := &types.DeleteObjectRequest{
 			Bucket: request.Bucket,
 			Key:    key,
 		}
 
 		err := p.DeleteObject(ctx, deleteRequest)
 		if err != nil {
-			response.Errors = append(response.Errors, gateway.DeleteError{
+			response.Errors = append(response.Errors, types.DeleteError{
 				Key:     key,
 				Code:    "DeleteFailed",
 				Message: err.Error(),
 			})
 		} else {
-			response.Deleted = append(response.Deleted, gateway.DeletedObject{
+			response.Deleted = append(response.Deleted, types.DeletedObject{
 				Key: key,
 			})
 		}
@@ -281,7 +290,7 @@ func (p *Provider) DeleteObjects(ctx context.Context, request *gateway.DeleteObj
 }
 
 // ListObjects lists objects in Azure Blob Storage
-func (p *Provider) ListObjects(ctx context.Context, request *gateway.ListObjectsRequest) (*gateway.ListObjectsResponse, error) {
+func (p *Provider) ListObjects(ctx context.Context, request *types.ListObjectsRequest) (*types.ListObjectsResponse, error) {
 	if !p.IsConfigured() {
 		return nil, fmt.Errorf("azure provider not configured")
 	}
@@ -305,8 +314,8 @@ func (p *Provider) ListObjects(ctx context.Context, request *gateway.ListObjects
 	// List blobs
 	pager := p.client.NewListBlobsFlatPager(request.Bucket, options)
 
-	response := &gateway.ListObjectsResponse{
-		Objects:        make([]gateway.ObjectInfo, 0),
+	response := &types.ListObjectsResponse{
+		Objects:        make([]types.ObjectInfo, 0),
 		CommonPrefixes: make([]string, 0),
 		ProviderData:   make(map[string]interface{}),
 	}
@@ -330,7 +339,7 @@ func (p *Provider) ListObjects(ctx context.Context, request *gateway.ListObjects
 				}
 			}
 
-			objInfo := gateway.ObjectInfo{
+			objInfo := types.ObjectInfo{
 				Key:          *blob.Name,
 				Size:         *blob.Properties.ContentLength,
 				LastModified: *blob.Properties.LastModified,
@@ -360,7 +369,7 @@ func (p *Provider) ListObjects(ctx context.Context, request *gateway.ListObjects
 }
 
 // ObjectExists checks if an object exists in Azure Blob Storage
-func (p *Provider) ObjectExists(ctx context.Context, request *gateway.ObjectExistsRequest) (bool, error) {
+func (p *Provider) ObjectExists(ctx context.Context, request *types.ObjectExistsRequest) (bool, error) {
 	if !p.IsConfigured() {
 		return false, fmt.Errorf("azure provider not configured")
 	}
@@ -379,7 +388,7 @@ func (p *Provider) ObjectExists(ctx context.Context, request *gateway.ObjectExis
 }
 
 // CopyObject copies an object within Azure Blob Storage
-func (p *Provider) CopyObject(ctx context.Context, request *gateway.CopyObjectRequest) (*gateway.CopyObjectResponse, error) {
+func (p *Provider) CopyObject(ctx context.Context, request *types.CopyObjectRequest) (*types.CopyObjectResponse, error) {
 	if !p.IsConfigured() {
 		return nil, fmt.Errorf("azure provider not configured")
 	}
@@ -413,7 +422,7 @@ func (p *Provider) CopyObject(ctx context.Context, request *gateway.CopyObjectRe
 		time.Sleep(100 * time.Millisecond)
 	}
 
-	response := &gateway.CopyObjectResponse{
+	response := &types.CopyObjectResponse{
 		Key:          request.DestKey,
 		ETag:         strings.Trim(string(*copyResult.ETag), "\""),
 		LastModified: time.Now(),
@@ -426,9 +435,9 @@ func (p *Provider) CopyObject(ctx context.Context, request *gateway.CopyObjectRe
 }
 
 // MoveObject moves an object within Azure Blob Storage
-func (p *Provider) MoveObject(ctx context.Context, request *gateway.MoveObjectRequest) (*gateway.MoveObjectResponse, error) {
+func (p *Provider) MoveObject(ctx context.Context, request *types.MoveObjectRequest) (*types.MoveObjectResponse, error) {
 	// Move is implemented as copy + delete
-	copyRequest := &gateway.CopyObjectRequest{
+	copyRequest := &types.CopyObjectRequest{
 		SourceBucket: request.SourceBucket,
 		SourceKey:    request.SourceKey,
 		DestBucket:   request.DestBucket,
@@ -441,7 +450,7 @@ func (p *Provider) MoveObject(ctx context.Context, request *gateway.MoveObjectRe
 	}
 
 	// Delete source object
-	deleteRequest := &gateway.DeleteObjectRequest{
+	deleteRequest := &types.DeleteObjectRequest{
 		Bucket: request.SourceBucket,
 		Key:    request.SourceKey,
 	}
@@ -451,7 +460,7 @@ func (p *Provider) MoveObject(ctx context.Context, request *gateway.MoveObjectRe
 		return nil, fmt.Errorf("failed to delete source object after move: %w", err)
 	}
 
-	response := &gateway.MoveObjectResponse{
+	response := &types.MoveObjectResponse{
 		Key:          copyResponse.Key,
 		ETag:         copyResponse.ETag,
 		LastModified: copyResponse.LastModified,
@@ -462,7 +471,7 @@ func (p *Provider) MoveObject(ctx context.Context, request *gateway.MoveObjectRe
 }
 
 // GetObjectInfo gets object information from Azure Blob Storage
-func (p *Provider) GetObjectInfo(ctx context.Context, request *gateway.GetObjectInfoRequest) (*gateway.ObjectInfo, error) {
+func (p *Provider) GetObjectInfo(ctx context.Context, request *types.GetObjectInfoRequest) (*types.ObjectInfo, error) {
 	if !p.IsConfigured() {
 		return nil, fmt.Errorf("azure provider not configured")
 	}
@@ -483,7 +492,7 @@ func (p *Provider) GetObjectInfo(ctx context.Context, request *gateway.GetObject
 		}
 	}
 
-	info := &gateway.ObjectInfo{
+	info := &types.ObjectInfo{
 		Key:          request.Key,
 		Size:         *props.ContentLength,
 		LastModified: *props.LastModified,
@@ -503,7 +512,7 @@ func (p *Provider) GetObjectInfo(ctx context.Context, request *gateway.GetObject
 }
 
 // GeneratePresignedURL generates a presigned URL for Azure Blob Storage
-func (p *Provider) GeneratePresignedURL(ctx context.Context, request *gateway.PresignedURLRequest) (string, error) {
+func (p *Provider) GeneratePresignedURL(ctx context.Context, request *types.PresignedURLRequest) (string, error) {
 	if !p.IsConfigured() {
 		return "", fmt.Errorf("azure provider not configured")
 	}
@@ -522,7 +531,11 @@ func (p *Provider) GeneratePresignedURL(ctx context.Context, request *gateway.Pr
 	}
 
 	// Create SAS URL
-	sasURL, err := p.client.ServiceClient().NewContainerClient(request.Bucket).NewBlobClient(request.Key).GetSASURL(permissions, time.Now().Add(request.Expires), nil)
+	expiry := time.Now().Add(request.ExpiresIn)
+	if !request.Expires.IsZero() {
+		expiry = request.Expires
+	}
+	sasURL, err := p.client.ServiceClient().NewContainerClient(request.Bucket).NewBlobClient(request.Key).GetSASURL(permissions, expiry, nil)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate SAS URL: %w", err)
 	}
@@ -531,7 +544,7 @@ func (p *Provider) GeneratePresignedURL(ctx context.Context, request *gateway.Pr
 }
 
 // GeneratePublicURL generates a public URL for Azure Blob Storage
-func (p *Provider) GeneratePublicURL(ctx context.Context, request *gateway.PublicURLRequest) (string, error) {
+func (p *Provider) GeneratePublicURL(ctx context.Context, request *types.PublicURLRequest) (string, error) {
 	if !p.IsConfigured() {
 		return "", fmt.Errorf("azure provider not configured")
 	}
@@ -544,7 +557,7 @@ func (p *Provider) GeneratePublicURL(ctx context.Context, request *gateway.Publi
 }
 
 // CreateBucket creates a container in Azure Blob Storage
-func (p *Provider) CreateBucket(ctx context.Context, request *gateway.CreateBucketRequest) error {
+func (p *Provider) CreateBucket(ctx context.Context, request *types.CreateBucketRequest) error {
 	if !p.IsConfigured() {
 		return fmt.Errorf("azure provider not configured")
 	}
@@ -559,7 +572,7 @@ func (p *Provider) CreateBucket(ctx context.Context, request *gateway.CreateBuck
 }
 
 // DeleteBucket deletes a container from Azure Blob Storage
-func (p *Provider) DeleteBucket(ctx context.Context, request *gateway.DeleteBucketRequest) error {
+func (p *Provider) DeleteBucket(ctx context.Context, request *types.DeleteBucketRequest) error {
 	if !p.IsConfigured() {
 		return fmt.Errorf("azure provider not configured")
 	}
@@ -574,7 +587,7 @@ func (p *Provider) DeleteBucket(ctx context.Context, request *gateway.DeleteBuck
 }
 
 // BucketExists checks if a container exists in Azure Blob Storage
-func (p *Provider) BucketExists(ctx context.Context, request *gateway.BucketExistsRequest) (bool, error) {
+func (p *Provider) BucketExists(ctx context.Context, request *types.BucketExistsRequest) (bool, error) {
 	if !p.IsConfigured() {
 		return false, fmt.Errorf("azure provider not configured")
 	}
@@ -593,7 +606,7 @@ func (p *Provider) BucketExists(ctx context.Context, request *gateway.BucketExis
 }
 
 // ListBuckets lists containers in Azure Blob Storage
-func (p *Provider) ListBuckets(ctx context.Context) ([]gateway.BucketInfo, error) {
+func (p *Provider) ListBuckets(ctx context.Context) ([]types.BucketInfo, error) {
 	if !p.IsConfigured() {
 		return nil, fmt.Errorf("azure provider not configured")
 	}
@@ -601,7 +614,7 @@ func (p *Provider) ListBuckets(ctx context.Context) ([]gateway.BucketInfo, error
 	// List containers
 	pager := p.client.NewListContainersPager(nil)
 
-	buckets := make([]gateway.BucketInfo, 0)
+	buckets := make([]types.BucketInfo, 0)
 	for pager.More() {
 		page, err := pager.NextPage(ctx)
 		if err != nil {
@@ -609,7 +622,7 @@ func (p *Provider) ListBuckets(ctx context.Context) ([]gateway.BucketInfo, error
 		}
 
 		for _, container := range page.ContainerItems {
-			buckets = append(buckets, gateway.BucketInfo{
+			buckets = append(buckets, types.BucketInfo{
 				Name:         *container.Name,
 				CreationDate: time.Now(), // CreationTime is not available in this context
 				ProviderData: map[string]interface{}{
