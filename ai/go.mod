@@ -3,12 +3,15 @@ module github.com/anasamu/microservices-library-go/ai
 go 1.21
 
 require (
-	github.com/anasamu/microservices-library-go/ai/providers/anthropic v0.0.0-20250913060430-f9d256adf8dd
-	github.com/anasamu/microservices-library-go/ai/providers/deepseek v0.0.0-20250913060430-f9d256adf8dd
-	github.com/anasamu/microservices-library-go/ai/providers/google v0.0.0-20250913060430-f9d256adf8dd
-	github.com/anasamu/microservices-library-go/ai/providers/openai v0.0.0-20250913060430-f9d256adf8dd
-	github.com/anasamu/microservices-library-go/ai/providers/xai v0.0.0-20250913060430-f9d256adf8dd
-	github.com/anasamu/microservices-library-go/ai/types v0.0.0-20250913060430-f9d256adf8dd
+	github.com/anasamu/microservices-library-go/ai/providers/anthropic v0.0.0-20250913061837-0bd547bfdf88
+	github.com/anasamu/microservices-library-go/ai/providers/deepseek v0.0.0-20250913061837-0bd547bfdf88
+	github.com/anasamu/microservices-library-go/ai/providers/google v0.0.0-20250913061837-0bd547bfdf88
+	github.com/anasamu/microservices-library-go/ai/providers/openai v0.0.0-20250913061837-0bd547bfdf88
+	github.com/anasamu/microservices-library-go/ai/providers/xai v0.0.0-20250913061837-0bd547bfdf88
+	github.com/anasamu/microservices-library-go/ai/types v0.0.0-20250913061837-0bd547bfdf88
 )
+
+
+
 
 
