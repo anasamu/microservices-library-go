@@ -16,7 +16,7 @@ Library Go yang komprehensif untuk pengembangan microservices dengan dukungan be
 - [Kontribusi](#kontribusi)
 - [Lisensi](#lisensi)
 
-## 🎯 Gambaran Umum
+## 🎯 Gambaran Umum.
 
 Microservices Library Go adalah kumpulan library yang dirancang untuk mempermudah pengembangan aplikasi microservices dengan arsitektur yang modular dan dapat diperluas. Library ini menyediakan abstraksi yang konsisten untuk berbagai layanan cloud dan provider eksternal.
 
