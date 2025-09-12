@@ -22,4 +22,3 @@ require (
 	golang.org/x/text v0.7.0 // indirect
 )
 
-replace github.com/anasamu/microservices-library-go/database/gateway => ../../gateway

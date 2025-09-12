@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/anasamu/microservices-library-go/scheduling/gateway"
+	"github.com/anasamu/microservices-library-go/scheduling"
 	"github.com/anasamu/microservices-library-go/scheduling/test/mocks"
 	"github.com/anasamu/microservices-library-go/scheduling/types"
 	"github.com/sirupsen/logrus"

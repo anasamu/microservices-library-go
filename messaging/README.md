@@ -104,7 +104,7 @@ import (
     "context"
     "log"
     
-    "github.com/anasamu/microservices-library-go/libs/messaging/gateway"
+    "github.com/anasamu/microservices-library-go/libs/messaging"
     "github.com/anasamu/microservices-library-go/libs/messaging/providers/kafka"
     "github.com/sirupsen/logrus"
 )
@@ -430,7 +430,7 @@ go test ./providers/rabbitmq/...
 go test ./providers/sqs/...
 
 # Run gateway tests
-go test ./gateway/...
+go test ./...
 ```
 
 ## 📚 API Documentation

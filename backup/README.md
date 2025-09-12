@@ -57,7 +57,7 @@ import (
     "context"
     "strings"
     
-    "github.com/anasamu/microservices-library-go/backup/gateway"
+    "github.com/anasamu/microservices-library-go/backup"
     "github.com/anasamu/microservices-library-go/backup/providers/local"
     "github.com/anasamu/microservices-library-go/backup/types"
 )

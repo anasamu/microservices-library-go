@@ -24,7 +24,6 @@ require (
 	golang.org/x/sys v0.13.0 // indirect
 )
 
-replace github.com/anasamu/microservices-library-go/event/gateway => ../gateway
 
 replace github.com/anasamu/microservices-library-go/event/providers/kafka => ../providers/kafka
 

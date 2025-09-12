@@ -57,7 +57,7 @@ import (
     "fmt"
     "time"
 
-    "github.com/anasamu/microservices-library-go/circuitbreaker/gateway"
+    "github.com/anasamu/microservices-library-go/circuitbreaker"
     "github.com/anasamu/microservices-library-go/circuitbreaker/providers/custom"
     "github.com/anasamu/microservices-library-go/circuitbreaker/types"
     "github.com/sirupsen/logrus"

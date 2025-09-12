@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/anasamu/microservices-library-go/communication/gateway"
+	"github.com/anasamu/microservices-library-go/communication"
 	"github.com/graphql-go/graphql"
 	"github.com/graphql-go/handler"
 	"github.com/sirupsen/logrus"

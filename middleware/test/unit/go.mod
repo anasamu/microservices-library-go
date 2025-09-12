@@ -16,5 +16,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/anasamu/microservices-library-go/middleware/gateway => ../../gateway
 replace github.com/anasamu/microservices-library-go/middleware/types => ../../types

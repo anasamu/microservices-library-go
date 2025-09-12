@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/anasamu/microservices-library-go/backup/gateway"
+	"github.com/anasamu/microservices-library-go/backup"
 	"github.com/anasamu/microservices-library-go/backup/providers/local"
 	"github.com/anasamu/microservices-library-go/backup/types"
 	"github.com/stretchr/testify/assert"

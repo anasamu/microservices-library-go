@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anasamu/microservices-library-go/failover/gateway"
+	"github.com/anasamu/microservices-library-go/failover"
 	"github.com/anasamu/microservices-library-go/failover/test/mocks"
 	"github.com/anasamu/microservices-library-go/failover/types"
 	"github.com/sirupsen/logrus"

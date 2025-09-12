@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anasamu/microservices-library-go/ratelimit/gateway"
+	"github.com/anasamu/microservices-library-go/ratelimit"
 	"github.com/anasamu/microservices-library-go/ratelimit/test/mocks"
 	"github.com/anasamu/microservices-library-go/ratelimit/types"
 	"github.com/sirupsen/logrus"

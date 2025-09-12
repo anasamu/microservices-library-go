@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/anasamu/microservices-library-go/payment/gateway"
+	"github.com/anasamu/microservices-library-go/payment"
 	"github.com/sirupsen/logrus"
 )
 
@@ -89,11 +89,11 @@ func (p *Provider) GetSupportedCurrencies() []string {
 }
 
 // GetSupportedMethods returns supported payment methods
-func (p *Provider) GetSupportedMethods() []gateway.PaymentMethod {
-	return []gateway.PaymentMethod{
-		gateway.PaymentMethodCard,
-		gateway.PaymentMethodBankTransfer,
-		gateway.PaymentMethodEWallet,
+func (p *Provider) GetSupportedMethods() []payment.PaymentMethod {
+	return []payment.PaymentMethod{
+		payment.PaymentMethodCard,
+		payment.PaymentMethodBankTransfer,
+		payment.PaymentMethodEWallet,
 	}
 }
 
@@ -137,7 +137,7 @@ func (p *Provider) IsConfigured() bool {
 }
 
 // CreatePayment creates a payment using PayPal
-func (p *Provider) CreatePayment(ctx context.Context, request *gateway.PaymentRequest) (*gateway.PaymentResponse, error) {
+func (p *Provider) CreatePayment(ctx context.Context, request *payment.PaymentRequest) (*payment.PaymentResponse, error) {
 	if !p.IsConfigured() {
 		return nil, fmt.Errorf("paypal provider not configured")
 	}
@@ -194,9 +194,9 @@ func (p *Provider) CreatePayment(ctx context.Context, request *gateway.PaymentRe
 		return nil, fmt.Errorf("approval URL not found in paypal order response")
 	}
 
-	response := &gateway.PaymentResponse{
+	response := &payment.PaymentResponse{
 		ID:         order.ID,
-		Status:     gateway.PaymentStatusPending,
+		Status:     payment.PaymentStatusPending,
 		PaymentURL: approvalURL,
 		ProviderData: map[string]interface{}{
 			"order_id": order.ID,
@@ -208,7 +208,7 @@ func (p *Provider) CreatePayment(ctx context.Context, request *gateway.PaymentRe
 }
 
 // GetPayment retrieves a payment from PayPal
-func (p *Provider) GetPayment(ctx context.Context, paymentID string) (*gateway.Payment, error) {
+func (p *Provider) GetPayment(ctx context.Context, paymentID string) (*payment.Payment, error) {
 	if !p.IsConfigured() {
 		return nil, fmt.Errorf("paypal provider not configured")
 	}
@@ -219,8 +219,8 @@ func (p *Provider) GetPayment(ctx context.Context, paymentID string) (*gateway.P
 		return nil, fmt.Errorf("failed to get paypal order: %w", err)
 	}
 
-	// Convert PayPal order to gateway payment
-	payment := &gateway.Payment{
+	// Convert PayPal order to payment
+	payment := &payment.Payment{
 		ID:     order.ID,
 		Status: p.convertStatus(order.Status),
 		ProviderData: map[string]interface{}{
@@ -246,18 +246,18 @@ func (p *Provider) CancelPayment(ctx context.Context, paymentID string) error {
 }
 
 // RefundPayment processes a refund using PayPal
-func (p *Provider) RefundPayment(ctx context.Context, request *gateway.RefundRequest) (*gateway.RefundResponse, error) {
+func (p *Provider) RefundPayment(ctx context.Context, request *payment.RefundRequest) (*payment.RefundResponse, error) {
 	if !p.IsConfigured() {
 		return nil, fmt.Errorf("paypal provider not configured")
 	}
 
 	// For PayPal, we need to capture the payment first, then refund
 	// This is a simplified implementation
-	response := &gateway.RefundResponse{
+	response := &payment.RefundResponse{
 		ID:           fmt.Sprintf("refund_%d", time.Now().Unix()),
 		PaymentID:    request.PaymentID,
 		Amount:       *request.Amount,
-		Status:       gateway.RefundStatusSucceeded,
+		Status:       payment.RefundStatusSucceeded,
 		Reason:       request.Reason,
 		ProviderData: map[string]interface{}{},
 		CreatedAt:    time.Now(),
@@ -267,7 +267,7 @@ func (p *Provider) RefundPayment(ctx context.Context, request *gateway.RefundReq
 }
 
 // ValidateWebhook validates a PayPal webhook
-func (p *Provider) ValidateWebhook(ctx context.Context, payload []byte, signature string) (*gateway.WebhookEvent, error) {
+func (p *Provider) ValidateWebhook(ctx context.Context, payload []byte, signature string) (*payment.WebhookEvent, error) {
 	if !p.IsConfigured() {
 		return nil, fmt.Errorf("paypal provider not configured")
 	}
@@ -281,7 +281,7 @@ func (p *Provider) ValidateWebhook(ctx context.Context, payload []byte, signatur
 	// In a real implementation, you would validate the signature here
 	// using PayPal's webhook signature verification
 
-	webhookEvent := &gateway.WebhookEvent{
+	webhookEvent := &payment.WebhookEvent{
 		ID:        fmt.Sprintf("event_%d", time.Now().Unix()),
 		Type:      event["event_type"].(string),
 		Data:      event,
@@ -292,7 +292,7 @@ func (p *Provider) ValidateWebhook(ctx context.Context, payload []byte, signatur
 }
 
 // ProcessWebhook processes a PayPal webhook event
-func (p *Provider) ProcessWebhook(ctx context.Context, event *gateway.WebhookEvent) error {
+func (p *Provider) ProcessWebhook(ctx context.Context, event *payment.WebhookEvent) error {
 	p.logger.WithFields(logrus.Fields{
 		"event_type": event.Type,
 		"payment_id": event.PaymentID,
@@ -422,33 +422,33 @@ func (p *Provider) getOrder(ctx context.Context, orderID string) (*PayPalOrder, 
 	return &order, nil
 }
 
-// convertStatus converts PayPal status to gateway status
-func (p *Provider) convertStatus(status string) gateway.PaymentStatus {
+// convertStatus converts PayPal status to payment status
+func (p *Provider) convertStatus(status string) payment.PaymentStatus {
 	switch status {
 	case "CREATED":
-		return gateway.PaymentStatusPending
+		return payment.PaymentStatusPending
 	case "SAVED":
-		return gateway.PaymentStatusPending
+		return payment.PaymentStatusPending
 	case "APPROVED":
-		return gateway.PaymentStatusProcessing
+		return payment.PaymentStatusProcessing
 	case "VOIDED":
-		return gateway.PaymentStatusCanceled
+		return payment.PaymentStatusCanceled
 	case "COMPLETED":
-		return gateway.PaymentStatusSucceeded
+		return payment.PaymentStatusSucceeded
 	default:
-		return gateway.PaymentStatusPending
+		return payment.PaymentStatusPending
 	}
 }
 
 // handlePaymentCaptureCompleted handles payment capture completed events
-func (p *Provider) handlePaymentCaptureCompleted(ctx context.Context, event *gateway.WebhookEvent) error {
+func (p *Provider) handlePaymentCaptureCompleted(ctx context.Context, event *payment.WebhookEvent) error {
 	p.logger.WithField("payment_id", event.PaymentID).Info("Payment capture completed")
 	// Implement your business logic here
 	return nil
 }
 
 // handlePaymentCaptureDenied handles payment capture denied events
-func (p *Provider) handlePaymentCaptureDenied(ctx context.Context, event *gateway.WebhookEvent) error {
+func (p *Provider) handlePaymentCaptureDenied(ctx context.Context, event *payment.WebhookEvent) error {
 	p.logger.WithField("payment_id", event.PaymentID).Info("Payment capture denied")
 	// Implement your business logic here
 	return nil

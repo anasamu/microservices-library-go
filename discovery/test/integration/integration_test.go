@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anasamu/microservices-library-go/discovery/gateway"
+	"github.com/anasamu/microservices-library-go/discovery"
 	"github.com/anasamu/microservices-library-go/discovery/providers/static"
 	"github.com/anasamu/microservices-library-go/discovery/types"
 	"github.com/sirupsen/logrus"

@@ -49,7 +49,7 @@ import (
     "log"
     
     "github.com/sirupsen/logrus"
-    "github.com/anasamu/microservices-library-go/auth/gateway"
+    "github.com/anasamu/microservices-library-go/auth"
     "github.com/anasamu/microservices-library-go/auth/providers/authentication/jwt"
     "github.com/anasamu/microservices-library-go/auth/types"
 )

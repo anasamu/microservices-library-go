@@ -8,7 +8,6 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 )
 
-replace github.com/anasamu/microservices-library-go/communication/gateway => ../../gateway
 
 require (
 	github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572 // indirect

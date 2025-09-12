@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anasamu/microservices-library-go/middleware/gateway"
+	"github.com/anasamu/microservices-library-go/middleware"
 	"github.com/anasamu/microservices-library-go/middleware/types"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"

@@ -5,12 +5,8 @@ go 1.21
 require (
 	github.com/anasamu/microservices-library-go/logging/types v0.0.0
 	github.com/elastic/go-elasticsearch/v8 v8.11.1
-	github.com/sirupsen/logrus v1.9.3
 )
 
-require (
-	github.com/elastic/elastic-transport-go/v8 v8.3.0 // indirect
-	golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8 // indirect
-)
+require github.com/elastic/elastic-transport-go/v8 v8.3.0 // indirect
 
 replace github.com/anasamu/microservices-library-go/logging/types => ../../types

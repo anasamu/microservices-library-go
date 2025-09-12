@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anasamu/microservices-library-go/event/gateway"
+	"github.com/anasamu/microservices-library-go/event"
 	"github.com/anasamu/microservices-library-go/event/providers/postgresql"
 	"github.com/anasamu/microservices-library-go/event/types"
 	"github.com/sirupsen/logrus"

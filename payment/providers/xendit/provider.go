@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/anasamu/microservices-library-go/payment/gateway"
+	"github.com/anasamu/microservices-library-go/payment"
 	"github.com/sirupsen/logrus"
 )
 
@@ -88,14 +88,14 @@ func (p *Provider) GetSupportedCurrencies() []string {
 }
 
 // GetSupportedMethods returns supported payment methods
-func (p *Provider) GetSupportedMethods() []gateway.PaymentMethod {
-	return []gateway.PaymentMethod{
-		gateway.PaymentMethodCard,
-		gateway.PaymentMethodBankTransfer,
-		gateway.PaymentMethodEWallet,
-		gateway.PaymentMethodQRCode,
-		gateway.PaymentMethodVirtualAccount,
-		gateway.PaymentMethodRetail,
+func (p *Provider) GetSupportedMethods() []payment.PaymentMethod {
+	return []payment.PaymentMethod{
+		payment.PaymentMethodCard,
+		payment.PaymentMethodBankTransfer,
+		payment.PaymentMethodEWallet,
+		payment.PaymentMethodQRCode,
+		payment.PaymentMethodVirtualAccount,
+		payment.PaymentMethodRetail,
 	}
 }
 
@@ -119,7 +119,7 @@ func (p *Provider) IsConfigured() bool {
 }
 
 // CreatePayment creates a payment using Xendit
-func (p *Provider) CreatePayment(ctx context.Context, request *gateway.PaymentRequest) (*gateway.PaymentResponse, error) {
+func (p *Provider) CreatePayment(ctx context.Context, request *payment.PaymentRequest) (*payment.PaymentResponse, error) {
 	if !p.IsConfigured() {
 		return nil, fmt.Errorf("xendit provider not configured")
 	}
@@ -162,7 +162,7 @@ func (p *Provider) CreatePayment(ctx context.Context, request *gateway.PaymentRe
 		return nil, fmt.Errorf("failed to create xendit invoice: %w", err)
 	}
 
-	response := &gateway.PaymentResponse{
+	response := &payment.PaymentResponse{
 		ID:         invoice.ID,
 		Status:     p.convertStatus(invoice.Status),
 		PaymentURL: invoice.InvoiceURL,
@@ -177,7 +177,7 @@ func (p *Provider) CreatePayment(ctx context.Context, request *gateway.PaymentRe
 }
 
 // GetPayment retrieves a payment from Xendit
-func (p *Provider) GetPayment(ctx context.Context, paymentID string) (*gateway.Payment, error) {
+func (p *Provider) GetPayment(ctx context.Context, paymentID string) (*payment.Payment, error) {
 	if !p.IsConfigured() {
 		return nil, fmt.Errorf("xendit provider not configured")
 	}
@@ -188,17 +188,17 @@ func (p *Provider) GetPayment(ctx context.Context, paymentID string) (*gateway.P
 		return nil, fmt.Errorf("failed to get xendit invoice: %w", err)
 	}
 
-	// Convert Xendit invoice to gateway payment
-	payment := &gateway.Payment{
+	// Convert Xendit invoice to payment
+	payment := &payment.Payment{
 		ID:          invoice.ID,
 		Amount:      invoice.Amount,
 		Currency:    invoice.Currency,
 		Status:      p.convertStatus(invoice.Status),
 		Description: invoice.Description,
-		Customer: &gateway.Customer{
+		Customer: &payment.Customer{
 			Email: invoice.UserID, // Xendit uses user_id as email
 		},
-		PaymentMethod: gateway.PaymentMethodCard, // Default, could be determined from payment method used
+		PaymentMethod: payment.PaymentMethodCard, // Default, could be determined from payment method used
 		ProviderData: map[string]interface{}{
 			"invoice_id":  invoice.ID,
 			"external_id": invoice.ExternalID,
@@ -234,18 +234,18 @@ func (p *Provider) CancelPayment(ctx context.Context, paymentID string) error {
 }
 
 // RefundPayment processes a refund using Xendit
-func (p *Provider) RefundPayment(ctx context.Context, request *gateway.RefundRequest) (*gateway.RefundResponse, error) {
+func (p *Provider) RefundPayment(ctx context.Context, request *payment.RefundRequest) (*payment.RefundResponse, error) {
 	if !p.IsConfigured() {
 		return nil, fmt.Errorf("xendit provider not configured")
 	}
 
 	// For Xendit, refunds are typically handled through their dashboard or API
 	// This is a simplified implementation
-	response := &gateway.RefundResponse{
+	response := &payment.RefundResponse{
 		ID:           fmt.Sprintf("refund_%d", time.Now().Unix()),
 		PaymentID:    request.PaymentID,
 		Amount:       *request.Amount,
-		Status:       gateway.RefundStatusSucceeded,
+		Status:       payment.RefundStatusSucceeded,
 		Reason:       request.Reason,
 		ProviderData: map[string]interface{}{},
 		CreatedAt:    time.Now(),
@@ -255,7 +255,7 @@ func (p *Provider) RefundPayment(ctx context.Context, request *gateway.RefundReq
 }
 
 // ValidateWebhook validates a Xendit webhook
-func (p *Provider) ValidateWebhook(ctx context.Context, payload []byte, signature string) (*gateway.WebhookEvent, error) {
+func (p *Provider) ValidateWebhook(ctx context.Context, payload []byte, signature string) (*payment.WebhookEvent, error) {
 	if !p.IsConfigured() {
 		return nil, fmt.Errorf("xendit provider not configured")
 	}
@@ -269,7 +269,7 @@ func (p *Provider) ValidateWebhook(ctx context.Context, payload []byte, signatur
 	// In a real implementation, you would validate the signature here
 	// using Xendit's webhook signature verification
 
-	webhookEvent := &gateway.WebhookEvent{
+	webhookEvent := &payment.WebhookEvent{
 		ID:        fmt.Sprintf("event_%d", time.Now().Unix()),
 		Type:      event["event"].(string),
 		Data:      event,
@@ -287,7 +287,7 @@ func (p *Provider) ValidateWebhook(ctx context.Context, payload []byte, signatur
 }
 
 // ProcessWebhook processes a Xendit webhook event
-func (p *Provider) ProcessWebhook(ctx context.Context, event *gateway.WebhookEvent) error {
+func (p *Provider) ProcessWebhook(ctx context.Context, event *payment.WebhookEvent) error {
 	p.logger.WithFields(logrus.Fields{
 		"event_type": event.Type,
 		"payment_id": event.PaymentID,
@@ -407,40 +407,40 @@ func (p *Provider) expireInvoice(ctx context.Context, invoiceID string) error {
 	return nil
 }
 
-// convertStatus converts Xendit status to gateway status
-func (p *Provider) convertStatus(status string) gateway.PaymentStatus {
+// convertStatus converts Xendit status to payment status
+func (p *Provider) convertStatus(status string) payment.PaymentStatus {
 	switch status {
 	case "PENDING":
-		return gateway.PaymentStatusPending
+		return payment.PaymentStatusPending
 	case "PAID":
-		return gateway.PaymentStatusSucceeded
+		return payment.PaymentStatusSucceeded
 	case "SETTLED":
-		return gateway.PaymentStatusSucceeded
+		return payment.PaymentStatusSucceeded
 	case "EXPIRED":
-		return gateway.PaymentStatusExpired
+		return payment.PaymentStatusExpired
 	case "FAILED":
-		return gateway.PaymentStatusFailed
+		return payment.PaymentStatusFailed
 	default:
-		return gateway.PaymentStatusPending
+		return payment.PaymentStatusPending
 	}
 }
 
 // handleInvoicePaid handles invoice paid events
-func (p *Provider) handleInvoicePaid(ctx context.Context, event *gateway.WebhookEvent) error {
+func (p *Provider) handleInvoicePaid(ctx context.Context, event *payment.WebhookEvent) error {
 	p.logger.WithField("payment_id", event.PaymentID).Info("Invoice paid")
 	// Implement your business logic here
 	return nil
 }
 
 // handleInvoiceExpired handles invoice expired events
-func (p *Provider) handleInvoiceExpired(ctx context.Context, event *gateway.WebhookEvent) error {
+func (p *Provider) handleInvoiceExpired(ctx context.Context, event *payment.WebhookEvent) error {
 	p.logger.WithField("payment_id", event.PaymentID).Info("Invoice expired")
 	// Implement your business logic here
 	return nil
 }
 
 // handleInvoiceFailed handles invoice failed events
-func (p *Provider) handleInvoiceFailed(ctx context.Context, event *gateway.WebhookEvent) error {
+func (p *Provider) handleInvoiceFailed(ctx context.Context, event *payment.WebhookEvent) error {
 	p.logger.WithField("payment_id", event.PaymentID).Info("Invoice failed")
 	// Implement your business logic here
 	return nil

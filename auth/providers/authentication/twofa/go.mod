@@ -4,7 +4,6 @@ go 1.21
 
 require (
 	github.com/anasamu/microservices-library-go/auth/types v0.0.0
-	github.com/google/uuid v1.5.0
 	github.com/sirupsen/logrus v1.9.3
 )
 

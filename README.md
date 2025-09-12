@@ -168,9 +168,27 @@ Setiap modul mengikuti pola yang konsisten:
 
 ### Prerequisites
 - Go 1.21 atau lebih baru
-- Git
 
-### Install Dependencies
+### Install dari Go Module Registry
+
+```bash
+# Install individual modules
+go get github.com/anasamu/microservices-library-go/ai@latest
+go get github.com/anasamu/microservices-library-go/auth@latest
+go get github.com/anasamu/microservices-library-go/storage@latest
+go get github.com/anasamu/microservices-library-go/database@latest
+go get github.com/anasamu/microservices-library-go/cache@latest
+go get github.com/anasamu/microservices-library-go/messaging@latest
+go get github.com/anasamu/microservices-library-go/event@latest
+go get github.com/anasamu/microservices-library-go/discovery@latest
+go get github.com/anasamu/microservices-library-go/scheduling@latest
+go get github.com/anasamu/microservices-library-go/ratelimit@latest
+
+# Or install all modules at once
+go get github.com/anasamu/microservices-library-go/...@latest
+```
+
+### Install dari Source (Development)
 
 ```bash
 # Clone repository
@@ -179,22 +197,6 @@ cd microservices-library-go
 
 # Install dependencies untuk semua modul
 ./tidy-all.sh
-```
-
-### Individual Module Installation
-
-```bash
-# AI Services
-cd ai && go mod tidy
-
-# Authentication
-cd auth && go mod tidy
-
-# Storage
-cd storage && go mod tidy
-
-# Database
-cd database && go mod tidy
 ```
 
 ## 💡 Penggunaan
@@ -209,13 +211,13 @@ import (
     "log"
     "time"
     
-    "github.com/anasamu/microservices-library-go/ai/gateway"
+    "github.com/anasamu/microservices-library-go/ai"
     "github.com/anasamu/microservices-library-go/ai/types"
 )
 
 func main() {
     // Create AI manager
-    manager := gateway.NewAIManager()
+    manager := ai.NewAIManager()
     
     // Add OpenAI provider
     config := &types.ProviderConfig{
@@ -257,7 +259,7 @@ import (
     "context"
     "log"
     
-    "github.com/anasamu/microservices-library-go/auth/gateway"
+    "github.com/anasamu/microservices-library-go/auth"
     "github.com/anasamu/microservices-library-go/auth/providers/authentication/jwt"
     "github.com/anasamu/microservices-library-go/auth/types"
     "github.com/sirupsen/logrus"
@@ -267,7 +269,7 @@ func main() {
     logger := logrus.New()
     
     // Create auth manager
-    authManager := gateway.NewAuthManager(gateway.DefaultManagerConfig(), logger)
+    authManager := auth.NewAuthManager(auth.DefaultManagerConfig(), logger)
     
     // Register JWT provider
     jwtProvider := jwt.NewJWTProvider(jwt.DefaultJWTConfig(), logger)
@@ -299,7 +301,7 @@ import (
     "log"
     "strings"
     
-    "github.com/anasamu/microservices-library-go/storage/gateway"
+    "github.com/anasamu/microservices-library-go/storage"
     "github.com/anasamu/microservices-library-go/storage/providers/s3"
     "github.com/sirupsen/logrus"
 )
@@ -308,7 +310,7 @@ func main() {
     logger := logrus.New()
     
     // Create storage manager
-    storageManager := gateway.NewStorageManager(gateway.DefaultManagerConfig(), logger)
+    storageManager := storage.NewStorageManager(storage.DefaultManagerConfig(), logger)
     
     // Register S3 provider
     s3Provider := s3.NewS3Provider(s3Config, logger)
@@ -344,14 +346,14 @@ import (
     "log"
     "strings"
     
-    "github.com/anasamu/microservices-library-go/backup/gateway"
+    "github.com/anasamu/microservices-library-go/backup"
     "github.com/anasamu/microservices-library-go/backup/providers/s3"
     "github.com/anasamu/microservices-library-go/backup/types"
 )
 
 func main() {
     // Create backup manager
-    manager := gateway.NewBackupManager()
+    manager := backup.NewBackupManager()
     
     // Set up S3 provider
     config := &s3.S3Config{
@@ -394,12 +396,12 @@ import (
     "context"
     "log"
     
-    "github.com/anasamu/microservices-library-go/filegen/gateway"
+    "github.com/anasamu/microservices-library-go/filegen"
 )
 
 func main() {
     // Create manager
-    manager, err := gateway.NewManager(nil)
+    manager, err := filegen.NewManager(nil)
     if err != nil {
         log.Fatal(err)
     }
@@ -408,8 +410,8 @@ func main() {
     ctx := context.Background()
 
     // Generate Excel file
-    req := &gateway.FileRequest{
-        Type: gateway.FileTypeExcel,
+    req := &filegen.FileRequest{
+        Type: filegen.FileTypeExcel,
         Data: map[string]interface{}{
             "sheets": map[string]interface{}{
                 "Employees": map[string]interface{}{
@@ -445,7 +447,7 @@ import (
     "log"
     "time"
     
-    "github.com/anasamu/microservices-library-go/discovery/gateway"
+    "github.com/anasamu/microservices-library-go/discovery"
     "github.com/anasamu/microservices-library-go/discovery/providers/consul"
     "github.com/anasamu/microservices-library-go/discovery/types"
     "github.com/sirupsen/logrus"
@@ -455,7 +457,7 @@ func main() {
     logger := logrus.New()
     
     // Create discovery manager
-    manager := gateway.NewDiscoveryManager(nil, logger)
+    manager := discovery.NewDiscoveryManager(nil, logger)
     
     // Create and register Consul provider
     consulConfig := &consul.ConsulConfig{
@@ -505,7 +507,7 @@ import (
     "log"
     "time"
     
-    "github.com/anasamu/microservices-library-go/scheduling/gateway"
+    "github.com/anasamu/microservices-library-go/scheduling"
     "github.com/anasamu/microservices-library-go/scheduling/providers/cron"
     "github.com/anasamu/microservices-library-go/scheduling/types"
     "github.com/sirupsen/logrus"
@@ -515,7 +517,7 @@ func main() {
     logger := logrus.New()
     
     // Create scheduling manager
-    manager := gateway.NewSchedulingManager(nil, logger)
+    manager := scheduling.NewSchedulingManager(nil, logger)
     
     // Create and register cron provider
     cronConfig := &cron.CronConfig{
@@ -684,16 +686,16 @@ import (
     "log"
     "net/http"
     
-    "github.com/anasamu/microservices-library-go/ai/gateway"
-    "github.com/anasamu/microservices-library-go/auth/gateway"
-    "github.com/anasamu/microservices-library-go/storage/gateway"
+    "github.com/anasamu/microservices-library-go/ai"
+    "github.com/anasamu/microservices-library-go/auth"
+    "github.com/anasamu/microservices-library-go/storage"
 )
 
 func main() {
     // Initialize services
-    aiManager := ai_gateway.NewAIManager()
-    authManager := auth_gateway.NewAuthManager(auth_gateway.DefaultManagerConfig(), logger)
-    storageManager := storage_gateway.NewStorageManager(storage_gateway.DefaultManagerConfig(), logger)
+    aiManager := ai.NewAIManager()
+    authManager := auth.NewAuthManager(auth.DefaultManagerConfig(), logger)
+    storageManager := storage.NewStorageManager(storage.DefaultManagerConfig(), logger)
     
     // Setup HTTP routes
     http.HandleFunc("/chat", chatHandler(aiManager))

@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/anasamu/microservices-library-go/payment/gateway"
+	"github.com/anasamu/microservices-library-go/payment"
 	"github.com/sirupsen/logrus"
 )
 
@@ -95,14 +95,14 @@ func (p *Provider) GetSupportedCurrencies() []string {
 }
 
 // GetSupportedMethods returns supported payment methods
-func (p *Provider) GetSupportedMethods() []gateway.PaymentMethod {
-	return []gateway.PaymentMethod{
-		gateway.PaymentMethodCard,
-		gateway.PaymentMethodBankTransfer,
-		gateway.PaymentMethodEWallet,
-		gateway.PaymentMethodQRCode,
-		gateway.PaymentMethodVirtualAccount,
-		gateway.PaymentMethodRetail,
+func (p *Provider) GetSupportedMethods() []payment.PaymentMethod {
+	return []payment.PaymentMethod{
+		payment.PaymentMethodCard,
+		payment.PaymentMethodBankTransfer,
+		payment.PaymentMethodEWallet,
+		payment.PaymentMethodQRCode,
+		payment.PaymentMethodVirtualAccount,
+		payment.PaymentMethodRetail,
 	}
 }
 
@@ -145,7 +145,7 @@ func (p *Provider) IsConfigured() bool {
 }
 
 // CreatePayment creates a payment using Midtrans
-func (p *Provider) CreatePayment(ctx context.Context, request *gateway.PaymentRequest) (*gateway.PaymentResponse, error) {
+func (p *Provider) CreatePayment(ctx context.Context, request *payment.PaymentRequest) (*payment.PaymentResponse, error) {
 	if !p.IsConfigured() {
 		return nil, fmt.Errorf("midtrans provider not configured")
 	}
@@ -210,9 +210,9 @@ func (p *Provider) CreatePayment(ctx context.Context, request *gateway.PaymentRe
 		return nil, fmt.Errorf("failed to create midtrans transaction: %w", err)
 	}
 
-	response := &gateway.PaymentResponse{
+	response := &payment.PaymentResponse{
 		ID:         transaction.OrderID,
-		Status:     gateway.PaymentStatusPending,
+		Status:     payment.PaymentStatusPending,
 		PaymentURL: transaction.RedirectURL,
 		ProviderData: map[string]interface{}{
 			"token":          transaction.Token,
@@ -225,7 +225,7 @@ func (p *Provider) CreatePayment(ctx context.Context, request *gateway.PaymentRe
 }
 
 // GetPayment retrieves a payment from Midtrans
-func (p *Provider) GetPayment(ctx context.Context, paymentID string) (*gateway.Payment, error) {
+func (p *Provider) GetPayment(ctx context.Context, paymentID string) (*payment.Payment, error) {
 	if !p.IsConfigured() {
 		return nil, fmt.Errorf("midtrans provider not configured")
 	}
@@ -236,14 +236,14 @@ func (p *Provider) GetPayment(ctx context.Context, paymentID string) (*gateway.P
 		return nil, fmt.Errorf("failed to get midtrans transaction: %w", err)
 	}
 
-	// Convert Midtrans transaction to gateway payment
-	payment := &gateway.Payment{
+	// Convert Midtrans transaction to payment
+	payment := &payment.Payment{
 		ID:          transaction.OrderID,
 		Amount:      p.parseAmount(transaction.GrossAmount),
 		Currency:    transaction.Currency,
 		Status:      p.convertStatus(transaction.TransactionStatus),
 		Description: "Midtrans Payment",
-		Customer: &gateway.Customer{
+		Customer: &payment.Customer{
 			Email: "", // Not available in status response
 		},
 		PaymentMethod: p.convertPaymentType(transaction.PaymentType),
@@ -283,18 +283,18 @@ func (p *Provider) CancelPayment(ctx context.Context, paymentID string) error {
 }
 
 // RefundPayment processes a refund using Midtrans
-func (p *Provider) RefundPayment(ctx context.Context, request *gateway.RefundRequest) (*gateway.RefundResponse, error) {
+func (p *Provider) RefundPayment(ctx context.Context, request *payment.RefundRequest) (*payment.RefundResponse, error) {
 	if !p.IsConfigured() {
 		return nil, fmt.Errorf("midtrans provider not configured")
 	}
 
 	// For Midtrans, refunds are typically handled through their dashboard
 	// This is a simplified implementation
-	response := &gateway.RefundResponse{
+	response := &payment.RefundResponse{
 		ID:           fmt.Sprintf("refund_%d", time.Now().Unix()),
 		PaymentID:    request.PaymentID,
 		Amount:       *request.Amount,
-		Status:       gateway.RefundStatusSucceeded,
+		Status:       payment.RefundStatusSucceeded,
 		Reason:       request.Reason,
 		ProviderData: map[string]interface{}{},
 		CreatedAt:    time.Now(),
@@ -304,7 +304,7 @@ func (p *Provider) RefundPayment(ctx context.Context, request *gateway.RefundReq
 }
 
 // ValidateWebhook validates a Midtrans webhook
-func (p *Provider) ValidateWebhook(ctx context.Context, payload []byte, signature string) (*gateway.WebhookEvent, error) {
+func (p *Provider) ValidateWebhook(ctx context.Context, payload []byte, signature string) (*payment.WebhookEvent, error) {
 	if !p.IsConfigured() {
 		return nil, fmt.Errorf("midtrans provider not configured")
 	}
@@ -320,7 +320,7 @@ func (p *Provider) ValidateWebhook(ctx context.Context, payload []byte, signatur
 		return nil, fmt.Errorf("invalid webhook signature")
 	}
 
-	webhookEvent := &gateway.WebhookEvent{
+	webhookEvent := &payment.WebhookEvent{
 		ID:        fmt.Sprintf("event_%d", time.Now().Unix()),
 		Type:      event["transaction_status"].(string),
 		Data:      event,
@@ -336,7 +336,7 @@ func (p *Provider) ValidateWebhook(ctx context.Context, payload []byte, signatur
 }
 
 // ProcessWebhook processes a Midtrans webhook event
-func (p *Provider) ProcessWebhook(ctx context.Context, event *gateway.WebhookEvent) error {
+func (p *Provider) ProcessWebhook(ctx context.Context, event *payment.WebhookEvent) error {
 	p.logger.WithFields(logrus.Fields{
 		"event_type": event.Type,
 		"payment_id": event.PaymentID,
@@ -476,39 +476,39 @@ func (p *Provider) validateSignature(payload []byte, signature string) bool {
 	return signature == expectedSignature
 }
 
-// convertStatus converts Midtrans status to gateway status
-func (p *Provider) convertStatus(status string) gateway.PaymentStatus {
+// convertStatus converts Midtrans status to payment status
+func (p *Provider) convertStatus(status string) payment.PaymentStatus {
 	switch status {
 	case "capture":
-		return gateway.PaymentStatusSucceeded
+		return payment.PaymentStatusSucceeded
 	case "settlement":
-		return gateway.PaymentStatusSucceeded
+		return payment.PaymentStatusSucceeded
 	case "pending":
-		return gateway.PaymentStatusPending
+		return payment.PaymentStatusPending
 	case "deny":
-		return gateway.PaymentStatusFailed
+		return payment.PaymentStatusFailed
 	case "expire":
-		return gateway.PaymentStatusExpired
+		return payment.PaymentStatusExpired
 	case "cancel":
-		return gateway.PaymentStatusCanceled
+		return payment.PaymentStatusCanceled
 	default:
-		return gateway.PaymentStatusPending
+		return payment.PaymentStatusPending
 	}
 }
 
-// convertPaymentType converts Midtrans payment type to gateway payment method
-func (p *Provider) convertPaymentType(paymentType string) gateway.PaymentMethod {
+// convertPaymentType converts Midtrans payment type to payment method
+func (p *Provider) convertPaymentType(paymentType string) payment.PaymentMethod {
 	switch paymentType {
 	case "credit_card":
-		return gateway.PaymentMethodCard
+		return payment.PaymentMethodCard
 	case "bank_transfer", "bca_va", "bni_va", "bri_va", "mandiri_va", "permata_va":
-		return gateway.PaymentMethodBankTransfer
+		return payment.PaymentMethodBankTransfer
 	case "gopay", "shopeepay", "qris":
-		return gateway.PaymentMethodEWallet
+		return payment.PaymentMethodEWallet
 	case "qr_code":
-		return gateway.PaymentMethodQRCode
+		return payment.PaymentMethodQRCode
 	default:
-		return gateway.PaymentMethodCard
+		return payment.PaymentMethodCard
 	}
 }
 
@@ -529,32 +529,32 @@ func (p *Provider) parseAmount(amountStr string) int64 {
 }
 
 // Webhook event handlers
-func (p *Provider) handleCapture(ctx context.Context, event *gateway.WebhookEvent) error {
+func (p *Provider) handleCapture(ctx context.Context, event *payment.WebhookEvent) error {
 	p.logger.WithField("payment_id", event.PaymentID).Info("Payment captured")
 	return nil
 }
 
-func (p *Provider) handleSettlement(ctx context.Context, event *gateway.WebhookEvent) error {
+func (p *Provider) handleSettlement(ctx context.Context, event *payment.WebhookEvent) error {
 	p.logger.WithField("payment_id", event.PaymentID).Info("Payment settled")
 	return nil
 }
 
-func (p *Provider) handlePending(ctx context.Context, event *gateway.WebhookEvent) error {
+func (p *Provider) handlePending(ctx context.Context, event *payment.WebhookEvent) error {
 	p.logger.WithField("payment_id", event.PaymentID).Info("Payment pending")
 	return nil
 }
 
-func (p *Provider) handleDeny(ctx context.Context, event *gateway.WebhookEvent) error {
+func (p *Provider) handleDeny(ctx context.Context, event *payment.WebhookEvent) error {
 	p.logger.WithField("payment_id", event.PaymentID).Info("Payment denied")
 	return nil
 }
 
-func (p *Provider) handleExpire(ctx context.Context, event *gateway.WebhookEvent) error {
+func (p *Provider) handleExpire(ctx context.Context, event *payment.WebhookEvent) error {
 	p.logger.WithField("payment_id", event.PaymentID).Info("Payment expired")
 	return nil
 }
 
-func (p *Provider) handleCancel(ctx context.Context, event *gateway.WebhookEvent) error {
+func (p *Provider) handleCancel(ctx context.Context, event *payment.WebhookEvent) error {
 	p.logger.WithField("payment_id", event.PaymentID).Info("Payment cancelled")
 	return nil
 }

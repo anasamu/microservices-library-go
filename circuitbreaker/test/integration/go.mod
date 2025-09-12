@@ -12,7 +12,6 @@ require (
 	golang.org/x/sys v0.15.0
 )
 
-replace github.com/anasamu/microservices-library-go/circuitbreaker/gateway => ../../gateway
 replace github.com/anasamu/microservices-library-go/circuitbreaker/providers/custom => ../../providers/custom
 replace github.com/anasamu/microservices-library-go/circuitbreaker/providers/gobreaker => ../../providers/gobreaker
 replace github.com/anasamu/microservices-library-go/circuitbreaker/types => ../../types

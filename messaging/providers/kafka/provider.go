@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/anasamu/microservices-library-go/messaging/gateway"
+	"github.com/anasamu/microservices-library-go/messaging"
 	"github.com/segmentio/kafka-go"
 	"github.com/sirupsen/logrus"
 )

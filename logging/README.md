@@ -42,7 +42,7 @@ package main
 
 import (
     "context"
-    "github.com/anasamu/microservices-library-go/logging/gateway"
+    "github.com/anasamu/microservices-library-go/logging"
     "github.com/anasamu/microservices-library-go/logging/providers/console"
     "github.com/anasamu/microservices-library-go/logging/types"
     "github.com/sirupsen/logrus"

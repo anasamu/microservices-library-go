@@ -10,6 +10,5 @@ require (
 	github.com/stretchr/testify v1.8.4
 )
 
-replace github.com/anasamu/microservices-library-go/scheduling/gateway => ../../gateway
 replace github.com/anasamu/microservices-library-go/scheduling/providers/cron => ../../providers/cron
 replace github.com/anasamu/microservices-library-go/scheduling/types => ../../types

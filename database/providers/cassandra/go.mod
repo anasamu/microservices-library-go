@@ -2,7 +2,6 @@ module github.com/anasamu/microservices-library-go/libs/database/providers/cassa
 
 go 1.21
 
-replace github.com/anasamu/microservices-library-go/libs/database/gateway => ../../gateway
 
 require (
 	github.com/anasamu/microservices-library-go/database/gateway v0.0.0-20250909181146-076a5bd412bb

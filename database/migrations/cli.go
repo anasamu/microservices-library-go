@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/anasamu/microservices-library-go/database/gateway"
+	"github.com/anasamu/microservices-library-go/database"
 	"github.com/sirupsen/logrus"
 )
 

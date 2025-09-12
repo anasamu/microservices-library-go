@@ -8,7 +8,6 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 )
 
-replace github.com/anasamu/microservices-library-go/communication/gateway => ../../gateway
 
 require (
 	golang.org/x/net v0.17.0 // indirect

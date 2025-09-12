@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/anasamu/microservices-library-go/database/gateway"
+	"github.com/anasamu/microservices-library-go/database"
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 )

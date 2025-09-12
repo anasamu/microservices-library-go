@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/anasamu/microservices-library-go/filegen/gateway"
+	"github.com/anasamu/microservices-library-go/filegen"
 )
 
 func TestManager(t *testing.T) {

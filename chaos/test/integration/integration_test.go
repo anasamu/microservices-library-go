@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anasamu/microservices-library-go/chaos/gateway"
+	"github.com/anasamu/microservices-library-go/chaos"
 	"github.com/anasamu/microservices-library-go/chaos/providers/http"
 	"github.com/anasamu/microservices-library-go/chaos/providers/messaging"
 )

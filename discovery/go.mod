@@ -3,9 +3,10 @@ module github.com/anasamu/microservices-library-go/discovery
 go 1.21
 
 require (
-	github.com/anasamu/microservices-library-go/discovery/gateway v0.0.0
 	github.com/anasamu/microservices-library-go/discovery/types v0.0.0
+	github.com/sirupsen/logrus v1.9.3
 )
 
-replace github.com/anasamu/microservices-library-go/discovery/gateway => ./gateway
+require golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8 // indirect
+
 replace github.com/anasamu/microservices-library-go/discovery/types => ./types

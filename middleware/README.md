@@ -57,7 +57,7 @@ import (
     "net/http"
     
     "github.com/sirupsen/logrus"
-    "github.com/anasamu/microservices-library-go/middleware/gateway"
+    "github.com/anasamu/microservices-library-go/middleware"
     "github.com/anasamu/microservices-library-go/middleware/providers/auth"
     "github.com/anasamu/microservices-library-go/middleware/providers/logging"
     "github.com/anasamu/microservices-library-go/middleware/providers/storage"

@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/anasamu/microservices-library-go/cache/gateway"
+	"github.com/anasamu/microservices-library-go/cache"
 	"github.com/anasamu/microservices-library-go/cache/providers/memory"
 	"github.com/anasamu/microservices-library-go/cache/providers/redis"
 	"github.com/sirupsen/logrus"

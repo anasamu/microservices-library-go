@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/anasamu/microservices-library-go/database/gateway"
+	"github.com/anasamu/microservices-library-go/database"
 	"github.com/anasamu/microservices-library-go/database/providers/elasticsearch"
 	"github.com/anasamu/microservices-library-go/database/providers/mongodb"
 	"github.com/anasamu/microservices-library-go/database/providers/mysql"

@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anasamu/microservices-library-go/scheduling/gateway"
+	"github.com/anasamu/microservices-library-go/scheduling"
 	"github.com/anasamu/microservices-library-go/scheduling/providers/cron"
 	"github.com/anasamu/microservices-library-go/scheduling/types"
 	"github.com/sirupsen/logrus"

@@ -16,10 +16,6 @@ Library untuk task scheduling yang mendukung berbagai provider dan fitur schedul
 
 ```
 scheduling/
-├── gateway/               # Core scheduling gateway
-│   ├── manager.go         # Task scheduling manager
-│   ├── example.go         # Usage examples
-│   └── go.mod             # Gateway dependencies
 ├── providers/             # Scheduling provider implementations
 │   ├── cron/              # Cron-based scheduling
 │   └── redis/             # Redis-based scheduling
@@ -28,6 +24,7 @@ scheduling/
 │   ├── unit/              # Unit tests
 │   └── mocks/             # Mock providers
 ├── types/                 # Data structures dan types
+├── manager.go             
 ├── go.mod                 # Main module dependencies
 └── README.md              # Dokumentasi library
 ```
@@ -49,7 +46,7 @@ import (
     "context"
     "time"
     
-    "github.com/anasamu/microservices-library-go/scheduling/gateway"
+    "github.com/anasamu/microservices-library-go/scheduling"
     "github.com/anasamu/microservices-library-go/scheduling/providers/cron"
     "github.com/anasamu/microservices-library-go/scheduling/types"
     "github.com/sirupsen/logrus"

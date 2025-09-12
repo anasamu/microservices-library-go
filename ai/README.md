@@ -41,13 +41,13 @@ import (
     "log"
     "time"
 
-    "github.com/anasamu/microservices-library-go/ai/gateway"
+    "github.com/anasamu/microservices-library-go/ai"
     "github.com/anasamu/microservices-library-go/ai/types"
 )
 
 func main() {
     // Create AI manager
-    manager := gateway.NewAIManager()
+    manager := ai.NewAIManager()
 
     // Add OpenAI provider
     openaiConfig := &types.ProviderConfig{

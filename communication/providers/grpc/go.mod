@@ -8,7 +8,6 @@ require (
 	google.golang.org/grpc v1.60.1
 )
 
-replace github.com/anasamu/microservices-library-go/communication/gateway => ../../gateway
 
 require (
 	github.com/golang/protobuf v1.5.3 // indirect

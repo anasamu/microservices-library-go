@@ -17,4 +17,3 @@ require (
 	golang.org/x/sys v0.5.0 // indirect
 )
 
-replace github.com/anasamu/microservices-library-go/messaging/gateway => ../../gateway

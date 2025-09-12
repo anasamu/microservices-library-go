@@ -48,7 +48,6 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 )
 
-replace github.com/anasamu/microservices-library-go/database/gateway => ../gateway
 
 replace github.com/anasamu/microservices-library-go/database/migrations => ../migrations
 

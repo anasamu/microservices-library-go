@@ -2,9 +2,14 @@ module github.com/anasamu/microservices-library-go/logging
 
 go 1.21
 
-replace github.com/anasamu/microservices-library-go/logging/types => ./types
+require (
+	github.com/anasamu/microservices-library-go/logging/types v0.0.0-00010101000000-000000000000
+	github.com/sirupsen/logrus v1.9.3
+)
 
-replace github.com/anasamu/microservices-library-go/logging/gateway => ./gateway
+require golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8 // indirect
+
+replace github.com/anasamu/microservices-library-go/logging/types => ./types
 
 replace github.com/anasamu/microservices-library-go/logging/providers/console => ./providers/console
 

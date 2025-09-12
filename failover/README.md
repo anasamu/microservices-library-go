@@ -58,7 +58,7 @@ import (
     "log"
     "time"
 
-    "github.com/anasamu/microservices-library-go/failover/gateway"
+    "github.com/anasamu/microservices-library-go/failover"
     "github.com/anasamu/microservices-library-go/failover/providers/consul"
     "github.com/anasamu/microservices-library-go/failover/types"
     "github.com/sirupsen/logrus"

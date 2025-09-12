@@ -70,7 +70,7 @@ package main
 import (
     "log"
     
-    "github.com/anasamu/microservices-library-go/config/gateway"
+    "github.com/anasamu/microservices-library-go/config"
     "github.com/anasamu/microservices-library-go/config/providers/file"
 )
 

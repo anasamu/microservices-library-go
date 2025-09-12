@@ -23,7 +23,6 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/anasamu/microservices-library-go/middleware/gateway => ../../gateway
 replace github.com/anasamu/microservices-library-go/middleware/providers/auth => ../../providers/auth
 replace github.com/anasamu/microservices-library-go/middleware/providers/logging => ../../providers/logging
 replace github.com/anasamu/microservices-library-go/middleware/providers/ratelimit => ../../providers/ratelimit

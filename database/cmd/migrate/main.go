@@ -8,7 +8,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/anasamu/microservices-library-go/database/gateway"
+	"github.com/anasamu/microservices-library-go/database"
 	"github.com/anasamu/microservices-library-go/database/migrations"
 	"github.com/anasamu/microservices-library-go/database/providers/cassandra"
 	"github.com/anasamu/microservices-library-go/database/providers/cockroachdb"

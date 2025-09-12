@@ -50,7 +50,7 @@ import (
     "context"
     "time"
     
-    "github.com/anasamu/microservices-library-go/event/gateway"
+    "github.com/anasamu/microservices-library-go/event"
     "github.com/anasamu/microservices-library-go/event/providers/postgresql"
     "github.com/sirupsen/logrus"
 )

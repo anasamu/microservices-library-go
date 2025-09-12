@@ -10,6 +10,5 @@ require (
 	github.com/stretchr/testify v1.8.4
 )
 
-replace github.com/anasamu/microservices-library-go/discovery/gateway => ../../gateway
 replace github.com/anasamu/microservices-library-go/discovery/test/mocks => ../mocks
 replace github.com/anasamu/microservices-library-go/discovery/types => ../../types

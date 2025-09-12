@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/anasamu/microservices-library-go/config/gateway"
+	"github.com/anasamu/microservices-library-go/config"
 	"github.com/anasamu/microservices-library-go/config/providers/env"
 	"github.com/anasamu/microservices-library-go/config/providers/file"
 	"github.com/anasamu/microservices-library-go/config/providers/vault"

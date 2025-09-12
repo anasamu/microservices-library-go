@@ -1,0 +1,74 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: 1.21
+    
+    - name: Download dependencies
+      run: |
+        find . -name "go.mod" -exec dirname {} \; | sort -u | while read -r dir; do
+          echo "Downloading dependencies for $dir"
+          (cd "$dir" && go mod download)
+        done
+    
+    - name: Run tests
+      run: |
+        find . -name "*_test.go" -exec dirname {} \; | sort -u | while read -r dir; do
+          echo "Running tests in $dir"
+          (cd "$dir" && go test ./...)
+        done
+    
+    - name: Build all modules
+      run: |
+        find . -name "go.mod" -exec dirname {} \; | sort -u | while read -r dir; do
+          echo "Building $dir"
+          (cd "$dir" && go build ./...)
+        done
+    
+    - name: Create Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        draft: false
+        prerelease: false
+        body: |
+          ## What's Changed
+          
+          This release includes updates to the microservices library with improved import paths and better module structure.
+          
+          ### Breaking Changes
+          - Import paths have been simplified from `/gateway` to direct library imports
+          - All modules now use the new import structure
+          
+          ### New Features
+          - Improved error handling
+          - Better type safety
+          - Enhanced documentation
+          
+          ### Installation
+          ```bash
+          go get github.com/anasamu/microservices-library-go/ai@${{ github.ref_name }}
+          go get github.com/anasamu/microservices-library-go/auth@${{ github.ref_name }}
+          go get github.com/anasamu/microservices-library-go/storage@${{ github.ref_name }}
+          # ... and other modules
+          ```
+          
+          ### Full Changelog
+          See the [commit history](https://github.com/anasamu/microservices-library-go/compare/${{ github.event.before }}...${{ github.ref_name }}) for details.

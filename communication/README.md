@@ -116,7 +116,7 @@ import (
     "context"
     "log"
     
-    "github.com/anasamu/microservices-library-go/communication/gateway"
+    "github.com/anasamu/microservices-library-go/communication"
     "github.com/anasamu/microservices-library-go/communication/providers/http"
     "github.com/sirupsen/logrus"
 )
@@ -561,7 +561,7 @@ go test ./providers/graphql/...
 go test ./providers/sse/...
 
 # Run gateway tests
-go test ./gateway/...
+go test ./...
 ```
 
 ## 📚 API Documentation

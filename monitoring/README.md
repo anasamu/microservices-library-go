@@ -44,7 +44,7 @@ import (
     "context"
     "time"
     
-    "github.com/anasamu/microservices-library-go/monitoring/gateway"
+    "github.com/anasamu/microservices-library-go/monitoring"
     "github.com/anasamu/microservices-library-go/monitoring/providers/prometheus"
     "github.com/anasamu/microservices-library-go/monitoring/types"
     "github.com/sirupsen/logrus"

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/anasamu/microservices-library-go/payment/gateway"
+	"github.com/anasamu/microservices-library-go/payment"
 	"github.com/sirupsen/logrus"
 	"github.com/stripe/stripe-go/v78"
 	"github.com/stripe/stripe-go/v78/checkout/session"
@@ -50,11 +50,11 @@ func (p *Provider) GetSupportedCurrencies() []string {
 }
 
 // GetSupportedMethods returns supported payment methods
-func (p *Provider) GetSupportedMethods() []gateway.PaymentMethod {
-	return []gateway.PaymentMethod{
-		gateway.PaymentMethodCard,
-		gateway.PaymentMethodBankTransfer,
-		gateway.PaymentMethodEWallet,
+func (p *Provider) GetSupportedMethods() []payment.PaymentMethod {
+	return []payment.PaymentMethod{
+		payment.PaymentMethodCard,
+		payment.PaymentMethodBankTransfer,
+		payment.PaymentMethodEWallet,
 	}
 }
 
@@ -78,7 +78,7 @@ func (p *Provider) IsConfigured() bool {
 }
 
 // CreatePayment creates a payment using Stripe
-func (p *Provider) CreatePayment(ctx context.Context, request *gateway.PaymentRequest) (*gateway.PaymentResponse, error) {
+func (p *Provider) CreatePayment(ctx context.Context, request *payment.PaymentRequest) (*payment.PaymentResponse, error) {
 	if !p.IsConfigured() {
 		return nil, fmt.Errorf("stripe provider not configured")
 	}
@@ -125,9 +125,9 @@ func (p *Provider) CreatePayment(ctx context.Context, request *gateway.PaymentRe
 		return nil, fmt.Errorf("failed to create stripe session: %w", err)
 	}
 
-	response := &gateway.PaymentResponse{
+	response := &payment.PaymentResponse{
 		ID:         session.ID,
-		Status:     gateway.PaymentStatusPending,
+		Status:     payment.PaymentStatusPending,
 		PaymentURL: session.URL,
 		ProviderData: map[string]interface{}{
 			"session_id":    session.ID,
@@ -140,7 +140,7 @@ func (p *Provider) CreatePayment(ctx context.Context, request *gateway.PaymentRe
 }
 
 // GetPayment retrieves a payment from Stripe
-func (p *Provider) GetPayment(ctx context.Context, paymentID string) (*gateway.Payment, error) {
+func (p *Provider) GetPayment(ctx context.Context, paymentID string) (*payment.Payment, error) {
 	if !p.IsConfigured() {
 		return nil, fmt.Errorf("stripe provider not configured")
 	}
@@ -172,7 +172,7 @@ func (p *Provider) GetPayment(ctx context.Context, paymentID string) (*gateway.P
 		metadata[k] = v
 	}
 
-	payment := &gateway.Payment{
+	paymentObj := &payment.Payment{
 		ID:          session.ID,
 		Amount:      session.AmountTotal,
 		Currency:    string(session.Currency),
@@ -189,21 +189,21 @@ func (p *Provider) GetPayment(ctx context.Context, paymentID string) (*gateway.P
 
 	// Add customer information
 	if session.CustomerEmail != "" {
-		payment.Customer = &gateway.Customer{
+		paymentObj.Customer = &payment.Customer{
 			Email: session.CustomerEmail,
 		}
 	}
 
 	// Add payment method
 	if paymentIntent != nil {
-		payment.PaymentMethod = gateway.PaymentMethodCard
+		paymentObj.PaymentMethod = payment.PaymentMethodCard
 		if paymentIntent.Status == stripe.PaymentIntentStatusSucceeded {
 			paidAt := time.Unix(paymentIntent.Created, 0)
-			payment.PaidAt = &paidAt
+			paymentObj.PaidAt = &paidAt
 		}
 	}
 
-	return payment, nil
+	return paymentObj, nil
 }
 
 // CancelPayment cancels a payment in Stripe
@@ -222,7 +222,7 @@ func (p *Provider) CancelPayment(ctx context.Context, paymentID string) error {
 }
 
 // RefundPayment processes a refund using Stripe
-func (p *Provider) RefundPayment(ctx context.Context, request *gateway.RefundRequest) (*gateway.RefundResponse, error) {
+func (p *Provider) RefundPayment(ctx context.Context, request *payment.RefundRequest) (*payment.RefundResponse, error) {
 	if !p.IsConfigured() {
 		return nil, fmt.Errorf("stripe provider not configured")
 	}
@@ -255,7 +255,7 @@ func (p *Provider) RefundPayment(ctx context.Context, request *gateway.RefundReq
 		return nil, fmt.Errorf("failed to create stripe refund: %w", err)
 	}
 
-	response := &gateway.RefundResponse{
+	response := &payment.RefundResponse{
 		ID:        refund.ID,
 		PaymentID: request.PaymentID,
 		Amount:    refund.Amount,
@@ -271,7 +271,7 @@ func (p *Provider) RefundPayment(ctx context.Context, request *gateway.RefundReq
 }
 
 // ValidateWebhook validates a Stripe webhook
-func (p *Provider) ValidateWebhook(ctx context.Context, payload []byte, signature string) (*gateway.WebhookEvent, error) {
+func (p *Provider) ValidateWebhook(ctx context.Context, payload []byte, signature string) (*payment.WebhookEvent, error) {
 	if !p.IsConfigured() {
 		return nil, fmt.Errorf("stripe provider not configured")
 	}
@@ -285,7 +285,7 @@ func (p *Provider) ValidateWebhook(ctx context.Context, payload []byte, signatur
 	// In a real implementation, you would validate the signature here
 	// using stripe's webhook signature verification
 
-	webhookEvent := &gateway.WebhookEvent{
+	webhookEvent := &payment.WebhookEvent{
 		ID:        event.ID,
 		Type:      string(event.Type),
 		Data:      make(map[string]interface{}),
@@ -315,7 +315,7 @@ func (p *Provider) ValidateWebhook(ctx context.Context, payload []byte, signatur
 }
 
 // ProcessWebhook processes a Stripe webhook event
-func (p *Provider) ProcessWebhook(ctx context.Context, event *gateway.WebhookEvent) error {
+func (p *Provider) ProcessWebhook(ctx context.Context, event *payment.WebhookEvent) error {
 	p.logger.WithFields(logrus.Fields{
 		"event_type": event.Type,
 		"payment_id": event.PaymentID,
@@ -337,57 +337,57 @@ func (p *Provider) ProcessWebhook(ctx context.Context, event *gateway.WebhookEve
 }
 
 // handleCheckoutSessionCompleted handles checkout session completed events
-func (p *Provider) handleCheckoutSessionCompleted(ctx context.Context, event *gateway.WebhookEvent) error {
+func (p *Provider) handleCheckoutSessionCompleted(ctx context.Context, event *payment.WebhookEvent) error {
 	p.logger.WithField("payment_id", event.PaymentID).Info("Checkout session completed")
 	// Implement your business logic here
 	return nil
 }
 
 // handlePaymentIntentSucceeded handles payment intent succeeded events
-func (p *Provider) handlePaymentIntentSucceeded(ctx context.Context, event *gateway.WebhookEvent) error {
+func (p *Provider) handlePaymentIntentSucceeded(ctx context.Context, event *payment.WebhookEvent) error {
 	p.logger.WithField("payment_id", event.PaymentID).Info("Payment intent succeeded")
 	// Implement your business logic here
 	return nil
 }
 
 // handlePaymentIntentFailed handles payment intent failed events
-func (p *Provider) handlePaymentIntentFailed(ctx context.Context, event *gateway.WebhookEvent) error {
+func (p *Provider) handlePaymentIntentFailed(ctx context.Context, event *payment.WebhookEvent) error {
 	p.logger.WithField("payment_id", event.PaymentID).Info("Payment intent failed")
 	// Implement your business logic here
 	return nil
 }
 
-// convertStatus converts Stripe status to gateway status
-func (p *Provider) convertStatus(status stripe.CheckoutSessionPaymentStatus) gateway.PaymentStatus {
+// convertStatus converts Stripe status to payment status
+func (p *Provider) convertStatus(status stripe.CheckoutSessionPaymentStatus) payment.PaymentStatus {
 	switch status {
 	case stripe.CheckoutSessionPaymentStatusPaid:
-		return gateway.PaymentStatusSucceeded
+		return payment.PaymentStatusSucceeded
 	case stripe.CheckoutSessionPaymentStatusUnpaid:
-		return gateway.PaymentStatusPending
+		return payment.PaymentStatusPending
 	case stripe.CheckoutSessionPaymentStatusNoPaymentRequired:
-		return gateway.PaymentStatusSucceeded
+		return payment.PaymentStatusSucceeded
 	default:
-		return gateway.PaymentStatusPending
+		return payment.PaymentStatusPending
 	}
 }
 
-// convertRefundStatus converts Stripe refund status to gateway status
-func (p *Provider) convertRefundStatus(status stripe.RefundStatus) gateway.RefundStatus {
+// convertRefundStatus converts Stripe refund status to payment status
+func (p *Provider) convertRefundStatus(status stripe.RefundStatus) payment.RefundStatus {
 	switch status {
 	case stripe.RefundStatusSucceeded:
-		return gateway.RefundStatusSucceeded
+		return payment.RefundStatusSucceeded
 	case stripe.RefundStatusPending:
-		return gateway.RefundStatusPending
+		return payment.RefundStatusPending
 	case stripe.RefundStatusFailed:
-		return gateway.RefundStatusFailed
+		return payment.RefundStatusFailed
 	case stripe.RefundStatusCanceled:
-		return gateway.RefundStatusCanceled
+		return payment.RefundStatusCanceled
 	default:
-		return gateway.RefundStatusPending
+		return payment.RefundStatusPending
 	}
 }
 
-// convertMetadata converts gateway metadata to Stripe metadata
+// convertMetadata converts payment metadata to Stripe metadata
 func (p *Provider) convertMetadata(metadata map[string]interface{}) map[string]string {
 	stripeMetadata := make(map[string]string)
 	for key, value := range metadata {

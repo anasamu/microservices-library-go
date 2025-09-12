@@ -54,7 +54,7 @@ import (
     "context"
     "log"
     
-    "github.com/anasamu/microservices-library-go/chaos/gateway"
+    "github.com/anasamu/microservices-library-go/chaos"
 )
 
 func main() {

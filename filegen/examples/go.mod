@@ -6,4 +6,3 @@ require (
 	github.com/anasamu/microservices-library-go/filegen/gateway v0.0.0
 )
 
-replace github.com/anasamu/microservices-library-go/filegen/gateway => ../gateway

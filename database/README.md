@@ -137,7 +137,7 @@ import (
     "context"
     "log"
     
-    "github.com/anasamu/microservices-library-go/libs/database/gateway"
+    "github.com/anasamu/microservices-library-go/libs/database"
     "github.com/anasamu/microservices-library-go/libs/database/providers/postgresql"
     "github.com/sirupsen/logrus"
 )
@@ -676,7 +676,7 @@ go test ./providers/redis/...
 go test ./providers/mysql/...
 
 # Run gateway tests
-go test ./gateway/...
+go test ./...
 ```
 
 ## 📚 API Documentation

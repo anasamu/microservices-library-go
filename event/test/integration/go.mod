@@ -10,7 +10,6 @@ require (
 	github.com/stretchr/testify v1.8.4
 )
 
-replace github.com/anasamu/microservices-library-go/event/gateway => ../../gateway
 
 replace github.com/anasamu/microservices-library-go/event/providers/postgresql => ../../providers/postgresql
 

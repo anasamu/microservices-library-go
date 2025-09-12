@@ -64,7 +64,7 @@ import (
     "log"
     "time"
 
-    "github.com/anasamu/microservices-library-go/discovery/gateway"
+    "github.com/anasamu/microservices-library-go/discovery"
     "github.com/anasamu/microservices-library-go/discovery/providers/consul"
     "github.com/anasamu/microservices-library-go/discovery/types"
     "github.com/sirupsen/logrus"

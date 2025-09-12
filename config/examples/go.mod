@@ -49,7 +49,6 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/anasamu/microservices-library-go/config/gateway => ../gateway
 
 replace github.com/anasamu/microservices-library-go/config/providers/env => ../providers/env
 
