@@ -1,3 +1,5 @@
+github.com/anasamu/microservices-library-go/cache/types v0.0.0-20250912215402-18e0574b055a h1:ZIyQyDl8MWiyaEm8IJOjpLmI0nuDcECD8HF9KVMA1e8=
+github.com/anasamu/microservices-library-go/cache/types v0.0.0-20250912215402-18e0574b055a/go.mod h1:uNfNEOCOp/et2qE89iyhJFUKIZjNjtdobehsM77KiYQ=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
