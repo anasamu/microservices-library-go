@@ -3,7 +3,7 @@ module github.com/anasamu/microservices-library-go/config/providers/file
 go 1.21
 
 require (
-	github.com/anasamu/microservices-library-go/config/types v0.0.0
+	github.com/anasamu/microservices-library-go/config/types v0.0.0-00010101000000-000000000000
 	github.com/spf13/viper v1.18.2
 )
 

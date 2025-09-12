@@ -3,10 +3,10 @@ module github.com/anasamu/microservices-library-go/config/examples
 go 1.21
 
 require (
-	github.com/anasamu/microservices-library-go/config v0.0.0
-	github.com/anasamu/microservices-library-go/config/providers/env v0.0.0
-	github.com/anasamu/microservices-library-go/config/providers/file v0.0.0
-	github.com/anasamu/microservices-library-go/config/providers/vault v0.0.0
+	github.com/anasamu/microservices-library-go/config v0.0.0-00010101000000-000000000000
+	github.com/anasamu/microservices-library-go/config/providers/env v0.0.0-00010101000000-000000000000
+	github.com/anasamu/microservices-library-go/config/providers/file v0.0.0-00010101000000-000000000000
+	github.com/anasamu/microservices-library-go/config/providers/vault v0.0.0-00010101000000-000000000000
 	github.com/anasamu/microservices-library-go/config/types v0.0.0
 )
 

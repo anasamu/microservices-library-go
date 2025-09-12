@@ -3,7 +3,7 @@ module github.com/anasamu/microservices-library-go/filegen/providers/pdf
 go 1.21
 
 require (
-	github.com/anasamu/microservices-library-go/filegen/types v0.0.0
+	github.com/anasamu/microservices-library-go/filegen/types v0.0.0-00010101000000-000000000000
 	github.com/unidoc/unioffice v1.26.0
 )
 

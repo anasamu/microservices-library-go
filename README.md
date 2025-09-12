@@ -63,10 +63,9 @@ microservices-library-go/
 
 Setiap modul mengikuti pola yang konsisten:
 
-1. **Gateway Manager**: Mengelola multiple provider
-2. **Provider Interface**: Abstraksi untuk implementasi spesifik
-3. **Types Package**: Definisi tipe data dan struktur
-4. **Examples**: Contoh implementasi dan penggunaan
+1. **Provider Interface**: Abstraksi untuk implementasi spesifik
+2. **Types Package**: Definisi tipe data dan struktur
+3. **Examples**: Contoh implementasi dan penggunaan
 
 ## ✨ Fitur Utama
 

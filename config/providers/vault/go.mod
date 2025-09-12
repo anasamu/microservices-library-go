@@ -3,7 +3,7 @@ module github.com/anasamu/microservices-library-go/config/providers/vault
 go 1.21
 
 require (
-	github.com/anasamu/microservices-library-go/config/types v0.0.0
+	github.com/anasamu/microservices-library-go/config/types v0.0.0-00010101000000-000000000000
 	github.com/hashicorp/vault/api v1.10.0
 )
 

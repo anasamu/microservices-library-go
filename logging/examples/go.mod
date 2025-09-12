@@ -3,10 +3,10 @@ module github.com/anasamu/microservices-library-go/logging/examples
 go 1.21
 
 require (
-	github.com/anasamu/microservices-library-go/logging v0.0.0
-	github.com/anasamu/microservices-library-go/logging/providers/console v0.0.0
-	github.com/anasamu/microservices-library-go/logging/providers/elasticsearch v0.0.0
-	github.com/anasamu/microservices-library-go/logging/providers/file v0.0.0
+	github.com/anasamu/microservices-library-go/logging v0.0.0-00010101000000-000000000000
+	github.com/anasamu/microservices-library-go/logging/providers/console v0.0.0-00010101000000-000000000000
+	github.com/anasamu/microservices-library-go/logging/providers/elasticsearch v0.0.0-00010101000000-000000000000
+	github.com/anasamu/microservices-library-go/logging/providers/file v0.0.0-00010101000000-000000000000
 	github.com/anasamu/microservices-library-go/logging/types v0.0.0
 	github.com/sirupsen/logrus v1.9.3
 )

@@ -3,10 +3,10 @@ module github.com/anasamu/microservices-library-go/event/examples
 go 1.21
 
 require (
-	github.com/anasamu/microservices-library-go/event v0.0.0
-	github.com/anasamu/microservices-library-go/event/providers/kafka v0.0.0
-	github.com/anasamu/microservices-library-go/event/providers/nats v0.0.0
-	github.com/anasamu/microservices-library-go/event/providers/postgresql v0.0.0
+	github.com/anasamu/microservices-library-go/event v0.0.0-00010101000000-000000000000
+	github.com/anasamu/microservices-library-go/event/providers/kafka v0.0.0-00010101000000-000000000000
+	github.com/anasamu/microservices-library-go/event/providers/nats v0.0.0-00010101000000-000000000000
+	github.com/anasamu/microservices-library-go/event/providers/postgresql v0.0.0-00010101000000-000000000000
 	github.com/anasamu/microservices-library-go/event/types v0.0.0
 	github.com/sirupsen/logrus v1.9.3
 )

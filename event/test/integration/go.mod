@@ -3,13 +3,12 @@ module github.com/anasamu/microservices-library-go/event/test/integration
 go 1.21
 
 require (
-	github.com/anasamu/microservices-library-go/event v0.0.0
-	github.com/anasamu/microservices-library-go/event/providers/postgresql v0.0.0
+	github.com/anasamu/microservices-library-go/event v0.0.0-20250912091737-88f10ddf9713
+	github.com/anasamu/microservices-library-go/event/providers/postgresql v0.0.0-00010101000000-000000000000
 	github.com/anasamu/microservices-library-go/event/types v0.0.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.8.4
 )
-
 
 replace github.com/anasamu/microservices-library-go/event/providers/postgresql => ../../providers/postgresql
 

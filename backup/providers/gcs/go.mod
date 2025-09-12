@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	cloud.google.com/go/storage v1.36.0
-	github.com/anasamu/microservices-library-go/backup v0.0.0
+	github.com/anasamu/microservices-library-go/backup v0.0.0-00010101000000-000000000000
 	google.golang.org/api v0.150.0
 )
 

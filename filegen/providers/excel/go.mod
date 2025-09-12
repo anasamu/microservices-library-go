@@ -3,7 +3,7 @@ module github.com/anasamu/microservices-library-go/filegen/providers/excel
 go 1.21
 
 require (
-	github.com/anasamu/microservices-library-go/filegen/types v0.0.0
+	github.com/anasamu/microservices-library-go/filegen/types v0.0.0-00010101000000-000000000000
 	github.com/xuri/excelize/v2 v2.8.0
 )
 

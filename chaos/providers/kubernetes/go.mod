@@ -3,7 +3,6 @@ module github.com/anasamu/microservices-library-go/chaos/providers/kubernetes
 go 1.21
 
 require (
-	github.com/anasamu/microservices-library-go/chaos/types v0.0.0
 	k8s.io/api v0.28.4
 	k8s.io/apimachinery v0.28.4
 	k8s.io/client-go v0.28.4

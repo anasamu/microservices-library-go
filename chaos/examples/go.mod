@@ -3,7 +3,6 @@ module github.com/anasamu/microservices-library-go/chaos/examples
 go 1.21
 
 require (
-	github.com/anasamu/microservices-library-go/chaos v0.0.0
 )
 
 

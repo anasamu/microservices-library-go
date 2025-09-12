@@ -3,7 +3,7 @@ module github.com/anasamu/microservices-library-go/logging/providers/elasticsear
 go 1.21
 
 require (
-	github.com/anasamu/microservices-library-go/logging/types v0.0.0
+	github.com/anasamu/microservices-library-go/logging/types v0.0.0-00010101000000-000000000000
 	github.com/elastic/go-elasticsearch/v8 v8.11.1
 )
 

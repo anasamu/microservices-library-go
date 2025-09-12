@@ -3,7 +3,6 @@ module github.com/anasamu/microservices-library-go/libs/database/cmd/migrate
 go 1.21
 
 require (
-	github.com/anasamu/microservices-library-go/database v0.0.0
 	github.com/anasamu/microservices-library-go/database/migrations v0.0.0-00010101000000-000000000000
 	github.com/anasamu/microservices-library-go/database/providers/cassandra v0.0.0-00010101000000-000000000000
 	github.com/anasamu/microservices-library-go/database/providers/cockroachdb v0.0.0-00010101000000-000000000000
