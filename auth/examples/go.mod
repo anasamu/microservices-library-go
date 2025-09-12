@@ -3,7 +3,7 @@ module github.com/anasamu/microservices-library-go/auth/examples
 go 1.21
 
 require (
-	github.com/anasamu/microservices-library-go/auth/gateway v0.0.0
+	github.com/anasamu/microservices-library-go/auth v0.0.0
 	github.com/anasamu/microservices-library-go/auth/providers/authentication/jwt v0.0.0
 	github.com/anasamu/microservices-library-go/auth/providers/authentication/oauth v0.0.0
 	github.com/anasamu/microservices-library-go/auth/providers/authentication/twofa v0.0.0
@@ -25,6 +25,8 @@ require (
 	google.golang.org/protobuf v1.31.0 // indirect
 )
 
+
+replace github.com/anasamu/microservices-library-go/auth => ..
 
 replace github.com/anasamu/microservices-library-go/auth/providers/authentication/jwt => ../providers/authentication/jwt
 
