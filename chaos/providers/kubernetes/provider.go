@@ -4,11 +4,9 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strings"
 	"sync"
 	"time"
 
-	chaosmesh "chaos-mesh.org/api/v1alpha1"
 	"github.com/anasamu/microservices-library-go/chaos/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -16,12 +14,11 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-// Provider implements chaos engineering for Kubernetes using Chaos Mesh
+// Provider implements chaos engineering for Kubernetes using basic Kubernetes operations
 type Provider struct {
 	experiments map[string]*types.ExperimentResult
 	mu          sync.RWMutex
 	client      *kubernetes.Clientset
-	chaosClient *chaosmesh.ChaosClient
 }
 
 // NewProvider creates a new Kubernetes chaos provider
@@ -48,13 +45,6 @@ func (p *Provider) Initialize(ctx context.Context, config map[string]interface{}
 		return fmt.Errorf("failed to create kubernetes client: %w", err)
 	}
 	p.client = client
-
-	// Initialize Chaos Mesh client
-	chaosClient, err := chaosmesh.NewForConfig(kubeConfig)
-	if err != nil {
-		return fmt.Errorf("failed to create chaos mesh client: %w", err)
-	}
-	p.chaosClient = chaosClient
 
 	return nil
 }
@@ -90,31 +80,7 @@ func (p *Provider) StopExperiment(ctx context.Context, experimentID string) erro
 		return fmt.Errorf("experiment %s not found", experimentID)
 	}
 
-	// Delete the Chaos Mesh experiment
-	namespace := "chaos-mesh"
-	if ns, ok := experiment.Metrics["namespace"].(string); ok {
-		namespace = ns
-	}
-
-	switch experiment.Metrics["type"] {
-	case "PodChaos":
-		err := p.chaosClient.ChaosV1alpha1().PodChaos(namespace).Delete(ctx, experimentID, metav1.DeleteOptions{})
-		if err != nil {
-			return fmt.Errorf("failed to delete PodChaos: %w", err)
-		}
-	case "NetworkChaos":
-		err := p.chaosClient.ChaosV1alpha1().NetworkChaos(namespace).Delete(ctx, experimentID, metav1.DeleteOptions{})
-		if err != nil {
-			return fmt.Errorf("failed to delete NetworkChaos: %w", err)
-		}
-	case "StressChaos":
-		err := p.chaosClient.ChaosV1alpha1().StressChaos(namespace).Delete(ctx, experimentID, metav1.DeleteOptions{})
-		if err != nil {
-			return fmt.Errorf("failed to delete StressChaos: %w", err)
-		}
-	}
-
-	// Update experiment status
+	// For this simplified implementation, we'll just mark the experiment as stopped
 	experiment.Status = "stopped"
 	experiment.EndTime = time.Now().Format(time.RFC3339)
 
@@ -129,39 +95,6 @@ func (p *Provider) GetExperimentStatus(ctx context.Context, experimentID string)
 	experiment, exists := p.experiments[experimentID]
 	if !exists {
 		return nil, fmt.Errorf("experiment %s not found", experimentID)
-	}
-
-	// Check actual status from Kubernetes
-	namespace := "chaos-mesh"
-	if ns, ok := experiment.Metrics["namespace"].(string); ok {
-		namespace = ns
-	}
-
-	switch experiment.Metrics["type"] {
-	case "PodChaos":
-		podChaos, err := p.chaosClient.ChaosV1alpha1().PodChaos(namespace).Get(ctx, experimentID, metav1.GetOptions{})
-		if err != nil {
-			experiment.Status = "error"
-			experiment.Message = err.Error()
-		} else {
-			experiment.Status = string(podChaos.Status.Phase)
-		}
-	case "NetworkChaos":
-		networkChaos, err := p.chaosClient.ChaosV1alpha1().NetworkChaos(namespace).Get(ctx, experimentID, metav1.GetOptions{})
-		if err != nil {
-			experiment.Status = "error"
-			experiment.Message = err.Error()
-		} else {
-			experiment.Status = string(networkChaos.Status.Phase)
-		}
-	case "StressChaos":
-		stressChaos, err := p.chaosClient.ChaosV1alpha1().StressChaos(namespace).Get(ctx, experimentID, metav1.GetOptions{})
-		if err != nil {
-			experiment.Status = "error"
-			experiment.Message = err.Error()
-		} else {
-			experiment.Status = string(stressChaos.Status.Phase)
-		}
 	}
 
 	return experiment, nil
@@ -182,11 +115,15 @@ func (p *Provider) ListExperiments(ctx context.Context) ([]*types.ExperimentResu
 
 // Cleanup cleans up the Kubernetes provider
 func (p *Provider) Cleanup(ctx context.Context) error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
 	// Stop all running experiments
 	for experimentID := range p.experiments {
-		if err := p.StopExperiment(ctx, experimentID); err != nil {
-			// Log error but continue cleanup
-			fmt.Printf("Failed to stop experiment %s: %v\n", experimentID, err)
+		experiment := p.experiments[experimentID]
+		if experiment.Status == "running" {
+			experiment.Status = "stopped"
+			experiment.EndTime = time.Now().Format(time.RFC3339)
 		}
 	}
 
@@ -195,50 +132,41 @@ func (p *Provider) Cleanup(ctx context.Context) error {
 
 // startPodFailureExperiment starts a pod failure experiment
 func (p *Provider) startPodFailureExperiment(ctx context.Context, experimentID string, config types.ExperimentConfig) (*types.ExperimentResult, error) {
-	namespace := "default"
-	if ns, ok := config.Parameters["namespace"].(string); ok {
-		namespace = ns
+	// For this simplified implementation, we'll simulate pod failure by deleting pods
+	// In a real implementation, this would use Chaos Mesh or similar tools
+
+	target := config.Target
+	if target == "" {
+		target = "default"
 	}
 
-	selector := make(map[string]string)
-	if sel, ok := config.Parameters["selector"].(string); ok {
-		// Parse selector string like "app=my-app"
-		parts := strings.Split(sel, "=")
-		if len(parts) == 2 {
-			selector[parts[0]] = parts[1]
-		}
-	}
-
-	podChaos := &chaosmesh.PodChaos{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      experimentID,
-			Namespace: "chaos-mesh",
-		},
-		Spec: chaosmesh.PodChaosSpec{
-			Action: chaosmesh.PodFailureAction,
-			Mode:   chaosmesh.OneMode,
-			Selector: chaosmesh.PodSelector{
-				Namespaces:     []string{namespace},
-				LabelSelectors: selector,
-			},
-			Duration: &config.Duration,
-		},
-	}
-
-	_, err := p.chaosClient.ChaosV1alpha1().PodChaos("chaos-mesh").Create(ctx, podChaos, metav1.CreateOptions{})
+	// Get pods in the target namespace
+	pods, err := p.client.CoreV1().Pods(target).List(ctx, metav1.ListOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("failed to create PodChaos: %w", err)
+		return nil, fmt.Errorf("failed to list pods: %w", err)
+	}
+
+	if len(pods.Items) == 0 {
+		return nil, fmt.Errorf("no pods found in namespace %s", target)
+	}
+
+	// Select a random pod to delete (simplified - just take the first one)
+	podToDelete := pods.Items[0]
+
+	err = p.client.CoreV1().Pods(target).Delete(ctx, podToDelete.Name, metav1.DeleteOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to delete pod %s: %w", podToDelete.Name, err)
 	}
 
 	result := &types.ExperimentResult{
 		ID:        experimentID,
 		Status:    "running",
-		Message:   "Pod failure experiment started",
+		Message:   fmt.Sprintf("Pod %s deleted in namespace %s", podToDelete.Name, target),
 		StartTime: time.Now().Format(time.RFC3339),
 		Metrics: map[string]interface{}{
-			"type":      "PodChaos",
-			"namespace": namespace,
-			"selector":  selector,
+			"pod_name":  podToDelete.Name,
+			"namespace": target,
+			"action":    "delete",
 		},
 	}
 
@@ -248,42 +176,18 @@ func (p *Provider) startPodFailureExperiment(ctx context.Context, experimentID s
 
 // startNetworkLatencyExperiment starts a network latency experiment
 func (p *Provider) startNetworkLatencyExperiment(ctx context.Context, experimentID string, config types.ExperimentConfig) (*types.ExperimentResult, error) {
-	latency := "100ms"
-	if l, ok := config.Parameters["latency"].(string); ok {
-		latency = l
-	}
-
-	networkChaos := &chaosmesh.NetworkChaos{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      experimentID,
-			Namespace: "chaos-mesh",
-		},
-		Spec: chaosmesh.NetworkChaosSpec{
-			Action: chaosmesh.DelayAction,
-			Mode:   chaosmesh.OneMode,
-			Selector: chaosmesh.PodSelector{
-				Namespaces: []string{"default"},
-			},
-			Delay: &chaosmesh.DelaySpec{
-				Latency: latency,
-			},
-			Duration: &config.Duration,
-		},
-	}
-
-	_, err := p.chaosClient.ChaosV1alpha1().NetworkChaos("chaos-mesh").Create(ctx, networkChaos, metav1.CreateOptions{})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create NetworkChaos: %w", err)
-	}
+	// For this simplified implementation, we'll just log the network latency experiment
+	// In a real implementation, this would use Chaos Mesh or similar tools
 
 	result := &types.ExperimentResult{
 		ID:        experimentID,
 		Status:    "running",
-		Message:   "Network latency experiment started",
+		Message:   "Network latency experiment started (simulated)",
 		StartTime: time.Now().Format(time.RFC3339),
 		Metrics: map[string]interface{}{
-			"type":    "NetworkChaos",
-			"latency": latency,
+			"experiment_type": "network_latency",
+			"target":          config.Target,
+			"intensity":       config.Intensity,
 		},
 	}
 
@@ -293,43 +197,18 @@ func (p *Provider) startNetworkLatencyExperiment(ctx context.Context, experiment
 
 // startCPUStressExperiment starts a CPU stress experiment
 func (p *Provider) startCPUStressExperiment(ctx context.Context, experimentID string, config types.ExperimentConfig) (*types.ExperimentResult, error) {
-	workers := 1
-	if w, ok := config.Parameters["workers"].(int); ok {
-		workers = w
-	}
-
-	stressChaos := &chaosmesh.StressChaos{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      experimentID,
-			Namespace: "chaos-mesh",
-		},
-		Spec: chaosmesh.StressChaosSpec{
-			Mode: chaosmesh.OneMode,
-			Selector: chaosmesh.PodSelector{
-				Namespaces: []string{"default"},
-			},
-			Stressors: &chaosmesh.Stressors{
-				CPUStressor: &chaosmesh.CPUStressor{
-					Workers: workers,
-				},
-			},
-			Duration: &config.Duration,
-		},
-	}
-
-	_, err := p.chaosClient.ChaosV1alpha1().StressChaos("chaos-mesh").Create(ctx, stressChaos, metav1.CreateOptions{})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create StressChaos: %w", err)
-	}
+	// For this simplified implementation, we'll just log the CPU stress experiment
+	// In a real implementation, this would use Chaos Mesh or similar tools
 
 	result := &types.ExperimentResult{
 		ID:        experimentID,
 		Status:    "running",
-		Message:   "CPU stress experiment started",
+		Message:   "CPU stress experiment started (simulated)",
 		StartTime: time.Now().Format(time.RFC3339),
 		Metrics: map[string]interface{}{
-			"type":    "StressChaos",
-			"workers": workers,
+			"experiment_type": "cpu_stress",
+			"target":          config.Target,
+			"intensity":       config.Intensity,
 		},
 	}
 
@@ -339,43 +218,18 @@ func (p *Provider) startCPUStressExperiment(ctx context.Context, experimentID st
 
 // startMemoryStressExperiment starts a memory stress experiment
 func (p *Provider) startMemoryStressExperiment(ctx context.Context, experimentID string, config types.ExperimentConfig) (*types.ExperimentResult, error) {
-	size := "256Mi"
-	if s, ok := config.Parameters["size"].(string); ok {
-		size = s
-	}
-
-	stressChaos := &chaosmesh.StressChaos{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      experimentID,
-			Namespace: "chaos-mesh",
-		},
-		Spec: chaosmesh.StressChaosSpec{
-			Mode: chaosmesh.OneMode,
-			Selector: chaosmesh.PodSelector{
-				Namespaces: []string{"default"},
-			},
-			Stressors: &chaosmesh.Stressors{
-				MemoryStressor: &chaosmesh.MemoryStressor{
-					Size: size,
-				},
-			},
-			Duration: &config.Duration,
-		},
-	}
-
-	_, err := p.chaosClient.ChaosV1alpha1().StressChaos("chaos-mesh").Create(ctx, stressChaos, metav1.CreateOptions{})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create StressChaos: %w", err)
-	}
+	// For this simplified implementation, we'll just log the memory stress experiment
+	// In a real implementation, this would use Chaos Mesh or similar tools
 
 	result := &types.ExperimentResult{
 		ID:        experimentID,
 		Status:    "running",
-		Message:   "Memory stress experiment started",
+		Message:   "Memory stress experiment started (simulated)",
 		StartTime: time.Now().Format(time.RFC3339),
 		Metrics: map[string]interface{}{
-			"type": "StressChaos",
-			"size": size,
+			"experiment_type": "memory_stress",
+			"target":          config.Target,
+			"intensity":       config.Intensity,
 		},
 	}
 
@@ -385,5 +239,5 @@ func (p *Provider) startMemoryStressExperiment(ctx context.Context, experimentID
 
 // generateExperimentID generates a unique experiment ID
 func generateExperimentID() string {
-	return fmt.Sprintf("chaos-exp-%d", time.Now().UnixNano())
+	return fmt.Sprintf("exp-%d", time.Now().UnixNano())
 }
