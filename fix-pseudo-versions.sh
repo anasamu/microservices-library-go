@@ -10,8 +10,9 @@ echo "Fixing pseudo-versions with actual commit hash..."
 COMMIT_HASH=$(git rev-parse HEAD)
 echo "Using commit hash: $COMMIT_HASH"
 
-# Create pseudo-version from commit hash
-PSEUDO_VERSION="v0.0.0-$(date -u +%Y%m%d%H%M%S)-${COMMIT_HASH:0:12}"
+# Create pseudo-version from commit hash (12 characters)
+SHORT_COMMIT_HASH=${COMMIT_HASH:0:12}
+PSEUDO_VERSION="v0.0.0-$(date -u +%Y%m%d%H%M%S)-${SHORT_COMMIT_HASH}"
 echo "Using pseudo-version: $PSEUDO_VERSION"
 
 # List of all modules
@@ -52,11 +53,15 @@ update_go_mod_pseudo_version() {
     echo "Processing $go_mod_file..."
     
     # Update internal dependencies to use proper pseudo-version
-    sed -i "s|github.com/anasamu/microservices-library-go/\([^/]*\)/types v0.0.0-00010101000000-000000000000|github.com/anasamu/microservices-library-go/\1/types $PSEUDO_VERSION|g" "$go_mod_file"
-    sed -i "s|github.com/anasamu/microservices-library-go/\([^/]*\)/types v0.0.0|github.com/anasamu/microservices-library-go/\1/types $PSEUDO_VERSION|g" "$go_mod_file"
+    # Match patterns like: github.com/anasamu/microservices-library-go/*/types v*
+    sed -i "s|github.com/anasamu/microservices-library-go/\([^/]*\)/types v[^\s]*|github.com/anasamu/microservices-library-go/\1/types $PSEUDO_VERSION|g" "$go_mod_file"
     
-    # Update provider dependencies
-    sed -i "s|github.com/anasamu/microservices-library-go/ai/providers/\([^ ]*\) v0.0.0-00010101000000-000000000000|github.com/anasamu/microservices-library-go/ai/providers/\1 $PSEUDO_VERSION|g" "$go_mod_file"
+    # Match patterns like: github.com/anasamu/microservices-library-go/ai/providers/* v*
+    sed -i "s|github.com/anasamu/microservices-library-go/ai/providers/\([^/\s]*\) v[^\s]*|github.com/anasamu/microservices-library-go/ai/providers/\1 $PSEUDO_VERSION|g" "$go_mod_file"
+    
+    # Fix any duplicate version issues
+    sed -i "s|github.com/anasamu/microservices-library-go/\([^/]*\)/types $PSEUDO_VERSION $PSEUDO_VERSION|github.com/anasamu/microservices-library-go/\1/types $PSEUDO_VERSION|g" "$go_mod_file"
+    sed -i "s|github.com/anasamu/microservices-library-go/ai/providers/\([^/\s]*\) $PSEUDO_VERSION $PSEUDO_VERSION|github.com/anasamu/microservices-library-go/ai/providers/\1 $PSEUDO_VERSION|g" "$go_mod_file"
     
     echo "Updated $go_mod_file"
 }
@@ -72,7 +77,11 @@ for provider in "${providers[@]}"; do
     go_mod_file="ai/providers/$provider/go.mod"
     if [ -f "$go_mod_file" ]; then
         echo "Processing $go_mod_file..."
-        sed -i "s|github.com/anasamu/microservices-library-go/ai/types v0.0.0-00010101000000-000000000000|github.com/anasamu/microservices-library-go/ai/types $PSEUDO_VERSION|g" "$go_mod_file"
+        sed -i "s|github.com/anasamu/microservices-library-go/ai/types v[^\s]*|github.com/anasamu/microservices-library-go/ai/types $PSEUDO_VERSION|g" "$go_mod_file"
+        
+        # Fix any duplicate version issues
+        sed -i "s|github.com/anasamu/microservices-library-go/ai/types $PSEUDO_VERSION $PSEUDO_VERSION|github.com/anasamu/microservices-library-go/ai/types $PSEUDO_VERSION|g" "$go_mod_file"
+        
         echo "Updated $go_mod_file"
     fi
 done

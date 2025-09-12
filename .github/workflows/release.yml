@@ -1,0 +1,173 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., v1.2.3)'
+        required: true
+        type: string
+      release_type:
+        description: 'Release type'
+        required: true
+        default: 'minor'
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+
+      - name: Get next version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "VERSION=${{ inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            # Auto-increment version based on commit messages
+            LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+            echo "Latest tag: $LATEST_TAG"
+            
+            # Parse version
+            VERSION_PARTS=($(echo $LATEST_TAG | sed 's/v//' | tr '.' ' '))
+            MAJOR=${VERSION_PARTS[0]}
+            MINOR=${VERSION_PARTS[1]}
+            PATCH=${VERSION_PARTS[2]}
+            
+            # Determine increment type based on commit messages
+            if git log --oneline $LATEST_TAG..HEAD | grep -q "BREAKING CHANGE\|breaking change"; then
+              MAJOR=$((MAJOR + 1))
+              MINOR=0
+              PATCH=0
+            elif git log --oneline $LATEST_TAG..HEAD | grep -q "feat:"; then
+              MINOR=$((MINOR + 1))
+              PATCH=0
+            else
+              PATCH=$((PATCH + 1))
+            fi
+            
+            NEXT_VERSION="v$MAJOR.$MINOR.$PATCH"
+            echo "VERSION=$NEXT_VERSION" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update go.mod files with new version
+        run: |
+          VERSION=${{ steps.version.outputs.VERSION }}
+          echo "Updating go.mod files to version: $VERSION"
+          
+          # Update all go.mod files with the new version for internal dependencies
+          find . -name "go.mod" -not -path "./.git/*" | while read file; do
+            echo "Processing $file"
+            # Replace internal dependencies with the new version
+            sed -i "s|github.com/anasamu/microservices-library-go/\([^/]*\)/types v[^\s]*|github.com/anasamu/microservices-library-go/\1/types $VERSION|g" "$file"
+            sed -i "s|github.com/anasamu/microservices-library-go/ai/providers/\([^/\s]*\) v[^\s]*|github.com/anasamu/microservices-library-go/ai/providers/\1 $VERSION|g" "$file"
+          done
+
+      - name: Run go mod tidy
+        run: |
+          # Run go mod tidy on all modules
+          for dir in $(find . -name "go.mod" -exec dirname {} \; | sort); do
+            echo "Running go mod tidy in $dir"
+            (cd "$dir" && go mod tidy)
+          done
+
+      - name: Commit version updates
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          git add .
+          git commit -m "chore: update to version ${{ steps.version.outputs.VERSION }}" || echo "No changes to commit"
+
+      - name: Create and push tags
+        run: |
+          VERSION=${{ steps.version.outputs.VERSION }}
+          echo "Creating tags for version: $VERSION"
+          
+          # Create tag for root repository
+          git tag -a "$VERSION" -m "Release $VERSION"
+          
+          # List of all main modules
+          modules=(
+            "ai"
+            "auth" 
+            "backup"
+            "cache"
+            "chaos"
+            "circuitbreaker"
+            "communication"
+            "config"
+            "database"
+            "discovery"
+            "event"
+            "failover"
+            "filegen"
+            "logging"
+            "messaging"
+            "middleware"
+            "monitoring"
+            "payment"
+            "ratelimit"
+            "scheduling"
+            "storage"
+          )
+          
+          # Create tags for each module
+          for module in "${modules[@]}"; do
+            if [ -d "$module" ]; then
+              moduleTag="$module/$VERSION"
+              echo "Creating tag: $moduleTag"
+              git tag -a "$moduleTag" -m "Release $module $VERSION"
+            fi
+          done
+          
+          # Create tags for AI providers
+          providers=("anthropic" "deepseek" "google" "openai" "xai")
+          for provider in "${providers[@]}"; do
+            providerPath="ai/providers/$provider"
+            if [ -d "$providerPath" ]; then
+              providerTag="ai/providers/$provider/$VERSION"
+              echo "Creating tag: $providerTag"
+              git tag -a "$providerTag" -m "Release ai/providers/$provider $VERSION"
+            fi
+          done
+          
+          # Push all tags
+          git push origin --tags
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.version.outputs.VERSION }}
+          release_name: Release ${{ steps.version.outputs.VERSION }}
+          body: |
+            ## Release ${{ steps.version.outputs.VERSION }}
+            
+            Automated release of microservices-library-go.
+            
+            ### Changes in this release
+            ${{ join(github.event.commits.*.message, '\n') }}
+            
+            ### Modules included
+            - All microservices modules with consistent versioning
+          draft: false
+          prerelease: false

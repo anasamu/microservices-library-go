@@ -1,0 +1,70 @@
+name: Validate Versioning
+
+on:
+  pull_request:
+    branches:
+      - main
+      - master
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+
+      - name: Check for duplicate versions in go.mod files
+        run: |
+          echo "Checking for duplicate versions in go.mod files..."
+          # Check for duplicate version entries
+          find . -name "go.mod" -not -path "./.git/*" | while read file; do
+            echo "Checking $file"
+            # Look for lines with duplicate versions
+            if grep -E "v[0-9]+\.[0-9]+\.[0-9]+.*v[0-9]+\.[0-9]+\.[0-9]+" "$file"; then
+              echo "ERROR: Found duplicate versions in $file"
+              exit 1
+            fi
+          done
+          echo "No duplicate versions found."
+
+      - name: Check for invalid pseudo-versions
+        run: |
+          echo "Checking for invalid pseudo-versions..."
+          # Check for the specific invalid version that was causing issues
+          if find . -name "go.mod" -not -path "./.git/*" -exec grep -l "00010101000000-000000000000" {} \;; then
+            echo "ERROR: Found invalid pseudo-version 00010101000000-000000000000"
+            exit 1
+          fi
+          echo "No invalid pseudo-versions found."
+
+      - name: Validate go.mod files
+        run: |
+          echo "Validating go.mod files..."
+          # Run go mod tidy on all modules to check for issues
+          find . -name "go.mod" -not -path "./.git/*" -exec dirname {} \; | while read dir; do
+            echo "Validating $dir"
+            (cd "$dir" && go mod tidy)
+          done
+          echo "All go.mod files validated successfully."
+
+      - name: Check module consistency
+        run: |
+          echo "Checking module consistency..."
+          # Ensure all internal dependencies use the same version pattern
+          VERSION_PATTERN="v0.0.0-[0-9]{14}-[a-f0-9]{12}"
+          find . -name "go.mod" -not -path "./.git/*" | while read file; do
+            echo "Checking internal dependencies in $file"
+            # Check if internal dependencies follow the expected pattern
+            grep -E "github.com/anasamu/microservices-library-go/.*/(types|providers)/.* v" "$file" | while read line; do
+              if ! echo "$line" | grep -qE "$VERSION_PATTERN"; then
+                echo "WARNING: Internal dependency in $file doesn't match expected version pattern: $line"
+                # This is a warning, not an error, as we might have semantic versions
+              fi
+            done
+          done
+          echo "Module consistency check completed."
