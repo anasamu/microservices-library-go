@@ -4,7 +4,7 @@ go 1.21
 
 
 require (
-	github.com/anasamu/microservices-library-go/database/gateway v0.0.0-20250909181146-076a5bd412bb
+	github.com/anasamu/microservices-library-go/database v0.0.0-20250909181146-076a5bd412bb
 	github.com/influxdata/influxdb-client-go/v2 v2.14.0
 	github.com/sirupsen/logrus v1.9.3
 )

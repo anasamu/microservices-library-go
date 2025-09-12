@@ -3,7 +3,7 @@ module github.com/anasamu/microservices-library-go/database/examples
 go 1.21
 
 require (
-	github.com/anasamu/microservices-library-go/database/gateway v0.0.0
+	github.com/anasamu/microservices-library-go/database v0.0.0
 	github.com/anasamu/microservices-library-go/database/migrations v0.0.0
 	github.com/anasamu/microservices-library-go/database/providers/cassandra v0.0.0
 	github.com/anasamu/microservices-library-go/database/providers/elasticsearch v0.0.0
@@ -48,7 +48,6 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 )
 
-
 replace github.com/anasamu/microservices-library-go/database/migrations => ../migrations
 
 replace github.com/anasamu/microservices-library-go/database/providers/cassandra => ../providers/cassandra
@@ -68,3 +67,5 @@ replace github.com/anasamu/microservices-library-go/database/providers/redis => 
 replace github.com/anasamu/microservices-library-go/database/providers/sqlite => ../providers/sqlite
 
 replace github.com/anasamu/microservices-library-go/database/providers/cockroachdb => ../providers/cockroachdb
+
+replace github.com/anasamu/microservices-library-go/database => ..

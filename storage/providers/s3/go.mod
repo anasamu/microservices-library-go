@@ -3,7 +3,7 @@ module github.com/anasamu/microservices-library-go/storage/providers/s3
 go 1.21
 
 require (
-	github.com/anasamu/microservices-library-go/storage/gateway v0.0.0
+	github.com/anasamu/microservices-library-go/storage v0.0.0
 	github.com/aws/aws-sdk-go-v2 v1.24.0
 	github.com/aws/aws-sdk-go-v2/config v1.26.1
 	github.com/aws/aws-sdk-go-v2/credentials v1.16.12

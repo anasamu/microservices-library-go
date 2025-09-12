@@ -3,7 +3,7 @@ module github.com/anasamu/microservices-library-go/database/providers/elasticsea
 go 1.21
 
 require (
-	github.com/anasamu/microservices-library-go/database/gateway v0.0.0
+	github.com/anasamu/microservices-library-go/database v0.0.0
 	github.com/elastic/go-elasticsearch/v8 v8.11.1
 	github.com/sirupsen/logrus v1.9.3
 )

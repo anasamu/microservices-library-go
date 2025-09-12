@@ -3,7 +3,7 @@ module github.com/anasamu/microservices-library-go/database/providers/cockroachd
 go 1.21
 
 require (
-	github.com/anasamu/microservices-library-go/database/gateway v0.0.0
+	github.com/anasamu/microservices-library-go/database v0.0.0
 	github.com/lib/pq v1.10.9
 	github.com/sirupsen/logrus v1.9.3
 )

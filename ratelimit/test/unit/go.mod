@@ -3,7 +3,7 @@ module github.com/anasamu/microservices-library-go/ratelimit/test/unit
 go 1.21
 
 require (
-	github.com/anasamu/microservices-library-go/ratelimit/gateway v0.0.0
+	github.com/anasamu/microservices-library-go/ratelimit v0.0.0
 	github.com/anasamu/microservices-library-go/ratelimit/test/mocks v0.0.0
 	github.com/anasamu/microservices-library-go/ratelimit/types v0.0.0
 	github.com/sirupsen/logrus v1.9.3

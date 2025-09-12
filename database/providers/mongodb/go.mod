@@ -3,7 +3,7 @@ module github.com/anasamu/microservices-library-go/database/providers/mongodb
 go 1.21
 
 require (
-	github.com/anasamu/microservices-library-go/database/gateway v0.0.0
+	github.com/anasamu/microservices-library-go/database v0.0.0
 	github.com/sirupsen/logrus v1.9.3
 	go.mongodb.org/mongo-driver v1.13.1
 )

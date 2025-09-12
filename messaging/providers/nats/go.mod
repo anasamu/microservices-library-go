@@ -3,7 +3,7 @@ module github.com/anasamu/microservices-library-go/messaging/providers/nats
 go 1.21
 
 require (
-	github.com/anasamu/microservices-library-go/messaging/gateway v0.0.0
+	github.com/anasamu/microservices-library-go/messaging v0.0.0
 	github.com/nats-io/nats.go v1.31.0
 	github.com/sirupsen/logrus v1.9.3
 )

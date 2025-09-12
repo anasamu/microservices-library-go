@@ -3,7 +3,7 @@ module github.com/anasamu/microservices-library-go/storage/providers/minio
 go 1.21
 
 require (
-	github.com/anasamu/microservices-library-go/storage/gateway v0.0.0
+	github.com/anasamu/microservices-library-go/storage v0.0.0
 	github.com/minio/minio-go/v7 v7.0.66
 	github.com/sirupsen/logrus v1.9.3
 )

@@ -3,7 +3,7 @@ module github.com/anasamu/microservices-library-go/communication/providers/graph
 go 1.21
 
 require (
-	github.com/anasamu/microservices-library-go/communication/gateway v0.0.0
+	github.com/anasamu/microservices-library-go/communication v0.0.0
 	github.com/graphql-go/graphql v0.8.1
 	github.com/graphql-go/handler v0.2.3
 	github.com/sirupsen/logrus v1.9.3

@@ -7,7 +7,6 @@ require (
 	github.com/anasamu/microservices-library-go/auth/providers/authentication/jwt v0.0.0
 	github.com/anasamu/microservices-library-go/auth/providers/authentication/oauth v0.0.0
 	github.com/anasamu/microservices-library-go/auth/providers/authentication/twofa v0.0.0
-	github.com/anasamu/microservices-library-go/auth/providers/middleware v0.0.0
 	github.com/anasamu/microservices-library-go/auth/types v0.0.0
 	github.com/sirupsen/logrus v1.9.3
 )
@@ -25,7 +24,6 @@ require (
 	google.golang.org/protobuf v1.31.0 // indirect
 )
 
-
 replace github.com/anasamu/microservices-library-go/auth => ..
 
 replace github.com/anasamu/microservices-library-go/auth/providers/authentication/jwt => ../providers/authentication/jwt
@@ -33,7 +31,5 @@ replace github.com/anasamu/microservices-library-go/auth/providers/authenticatio
 replace github.com/anasamu/microservices-library-go/auth/providers/authentication/oauth => ../providers/authentication/oauth
 
 replace github.com/anasamu/microservices-library-go/auth/providers/authentication/twofa => ../providers/authentication/twofa
-
-replace github.com/anasamu/microservices-library-go/auth/providers/middleware => ../providers/middleware
 
 replace github.com/anasamu/microservices-library-go/auth/types => ../types

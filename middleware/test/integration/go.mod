@@ -3,7 +3,7 @@ module github.com/anasamu/microservices-library-go/middleware/test/integration
 go 1.21
 
 require (
-	github.com/anasamu/microservices-library-go/middleware/gateway v0.0.0
+	github.com/anasamu/microservices-library-go/middleware v0.0.0
 	github.com/anasamu/microservices-library-go/middleware/providers/auth v0.0.0
 	github.com/anasamu/microservices-library-go/middleware/providers/logging v0.0.0
 	github.com/anasamu/microservices-library-go/middleware/providers/ratelimit v0.0.0

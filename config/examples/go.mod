@@ -3,7 +3,7 @@ module github.com/anasamu/microservices-library-go/config/examples
 go 1.21
 
 require (
-	github.com/anasamu/microservices-library-go/config/gateway v0.0.0
+	github.com/anasamu/microservices-library-go/config v0.0.0
 	github.com/anasamu/microservices-library-go/config/providers/env v0.0.0
 	github.com/anasamu/microservices-library-go/config/providers/file v0.0.0
 	github.com/anasamu/microservices-library-go/config/providers/vault v0.0.0
@@ -49,7 +49,6 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-
 replace github.com/anasamu/microservices-library-go/config/providers/env => ../providers/env
 
 replace github.com/anasamu/microservices-library-go/config/providers/file => ../providers/file
@@ -57,3 +56,5 @@ replace github.com/anasamu/microservices-library-go/config/providers/file => ../
 replace github.com/anasamu/microservices-library-go/config/providers/vault => ../providers/vault
 
 replace github.com/anasamu/microservices-library-go/config/types => ../types
+
+replace github.com/anasamu/microservices-library-go/config => ..

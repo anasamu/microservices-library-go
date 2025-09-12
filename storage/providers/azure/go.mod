@@ -24,4 +24,3 @@ require (
 )
 
 replace github.com/anasamu/microservices-library-go/storage/types => ../../types
-

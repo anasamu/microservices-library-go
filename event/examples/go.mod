@@ -3,7 +3,7 @@ module github.com/anasamu/microservices-library-go/event/examples
 go 1.21
 
 require (
-	github.com/anasamu/microservices-library-go/event/gateway v0.0.0
+	github.com/anasamu/microservices-library-go/event v0.0.0
 	github.com/anasamu/microservices-library-go/event/providers/kafka v0.0.0
 	github.com/anasamu/microservices-library-go/event/providers/nats v0.0.0
 	github.com/anasamu/microservices-library-go/event/providers/postgresql v0.0.0
@@ -24,7 +24,6 @@ require (
 	golang.org/x/sys v0.13.0 // indirect
 )
 
-
 replace github.com/anasamu/microservices-library-go/event/providers/kafka => ../providers/kafka
 
 replace github.com/anasamu/microservices-library-go/event/providers/nats => ../providers/nats
@@ -32,3 +31,5 @@ replace github.com/anasamu/microservices-library-go/event/providers/nats => ../p
 replace github.com/anasamu/microservices-library-go/event/providers/postgresql => ../providers/postgresql
 
 replace github.com/anasamu/microservices-library-go/event/types => ../types
+
+replace github.com/anasamu/microservices-library-go/event => ..

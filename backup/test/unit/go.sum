@@ -1,7 +1,3 @@
-github.com/anasamu/microservices-library-go/backup/gateway v0.0.0-20250910142242-8bec92b8b0f4 h1:42Kr2xHoxzv2hVpuJOwK38I5nopDUV67TfqzCGtQcIg=
-github.com/anasamu/microservices-library-go/backup/gateway v0.0.0-20250910142242-8bec92b8b0f4/go.mod h1:DLNU85o4fmTJ5RFcCtiQfdCGIeo6CCkcdowALUHTVT0=
-github.com/anasamu/microservices-library-go/backup/providers/local v0.0.0-20250910142242-8bec92b8b0f4 h1:82A+JE9tvnhd/inm/N9HzQ4V4Egx1VPKWzeMtHFXK/8=
-github.com/anasamu/microservices-library-go/backup/providers/local v0.0.0-20250910142242-8bec92b8b0f4/go.mod h1:tg4WNtz3/x5iI18jXa50isHiOTHKUMTwjIfUn1WwRCk=
 github.com/anasamu/microservices-library-go/backup/test/mocks v0.0.0-20250910142242-8bec92b8b0f4 h1:RwxGfG2R2GuawIZNw8iKY9hfiYF+cAqc72Sv4PfV3K0=
 github.com/anasamu/microservices-library-go/backup/test/mocks v0.0.0-20250910142242-8bec92b8b0f4/go.mod h1:/+45UGosBunZMiCB9pgPbKbhfOR2qfaRo/Xluwv/x9Y=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
