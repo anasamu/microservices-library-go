@@ -1,0 +1,12 @@
+github.com/anasamu/microservices-library-go/ai/providers/anthropic v0.0.0-20250912212654-08af9e89ff53 h1:S5YD6C4U6AIoegxlqMWz29SZ5wAJNwPHVnekks+UjEo=
+github.com/anasamu/microservices-library-go/ai/providers/anthropic v0.0.0-20250912212654-08af9e89ff53/go.mod h1:EstiswyxWRkIv3JM5KkjzTQZIXR3MHvU4jcdquO51Yk=
+github.com/anasamu/microservices-library-go/ai/providers/deepseek v0.0.0-20250912212654-08af9e89ff53 h1:xrPRIlkS+iRazqQSMsKuLc0lwnf0ewOuNIer5AlZ3IQ=
+github.com/anasamu/microservices-library-go/ai/providers/deepseek v0.0.0-20250912212654-08af9e89ff53/go.mod h1:L12s568ssTegLufJA80qDYep3eGQC8yXCXM7zGAwWSY=
+github.com/anasamu/microservices-library-go/ai/providers/google v0.0.0-20250912212654-08af9e89ff53 h1:eH9FC2CX1eWib6ux0US3zsJCyO/T4G/oj/T/6a72HjE=
+github.com/anasamu/microservices-library-go/ai/providers/google v0.0.0-20250912212654-08af9e89ff53/go.mod h1:yExKsTYV/3hYYDo2ueyljkinP+AWcB4+dPfttpP3Jac=
+github.com/anasamu/microservices-library-go/ai/providers/openai v0.0.0-20250912212654-08af9e89ff53 h1:Tpdi1owGrGM5KeWdhvMT+tpr/UPQp3AO+yFJuCIyOGE=
+github.com/anasamu/microservices-library-go/ai/providers/openai v0.0.0-20250912212654-08af9e89ff53/go.mod h1:QAF8zW1GhpTPZl1eKwkGedQ4fn+9tktRQc1ga+g1eV8=
+github.com/anasamu/microservices-library-go/ai/providers/xai v0.0.0-20250912212654-08af9e89ff53 h1:qIEB7M6OSc0xj5Al6qeSYpcSzrKVYjGdVBgRfxU6deA=
+github.com/anasamu/microservices-library-go/ai/providers/xai v0.0.0-20250912212654-08af9e89ff53/go.mod h1:nd6a4lRAs3LeCnikhzppXG7di2DrhR+NbueJH3D2MdY=
+github.com/anasamu/microservices-library-go/ai/types v1.0.0 h1:QYO2xhghkCs3LuYtXUbN1Eak/fGurSI3WbdFQdFPbpA=
+github.com/anasamu/microservices-library-go/ai/types v1.0.0/go.mod h1:ACJsWDDbRfo3bgSnL6WpgT3wnOl4iWmRJMtxIkvuXD0=

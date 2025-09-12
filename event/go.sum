@@ -1,5 +1,5 @@
-github.com/anasamu/microservices-library-go/event/types v0.0.0-20250910142242-8bec92b8b0f4 h1:R2N25kYMsPuifprxbrNaLKfDbzDJj2cvqH/2uKPs0r8=
-github.com/anasamu/microservices-library-go/event/types v0.0.0-20250910142242-8bec92b8b0f4/go.mod h1:WZqmu9MRDnDUWhY+diw7THBDEJqiIgrmUcmJQPGnPEo=
+github.com/anasamu/microservices-library-go/event/types v0.0.0-20250912212654-08af9e89ff53 h1:yTeXOfdfYJZvN9MwLS24i8Aeph5gKcgLNrArY5GN+Bs=
+github.com/anasamu/microservices-library-go/event/types v0.0.0-20250912212654-08af9e89ff53/go.mod h1:WZqmu9MRDnDUWhY+diw7THBDEJqiIgrmUcmJQPGnPEo=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

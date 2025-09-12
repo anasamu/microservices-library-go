@@ -3,7 +3,7 @@ module github.com/anasamu/microservices-library-go/monitoring
 go 1.21
 
 require (
-	github.com/anasamu/microservices-library-go/monitoring/types v0.0.0-20250910142242-8bec92b8b0f4
+	github.com/anasamu/microservices-library-go/monitoring/types v0.0.0-20250912212654-08af9e89ff53-20250910142242-8bec92b8b0f4
 	github.com/sirupsen/logrus v1.9.3
 )
 

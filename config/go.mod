@@ -12,4 +12,4 @@ replace github.com/anasamu/microservices-library-go/config/providers/vault => ./
 
 replace github.com/anasamu/microservices-library-go/config/providers/consul => ./providers/consul
 
-require github.com/anasamu/microservices-library-go/config/types v0.0.0-00010101000000-000000000000
+require github.com/anasamu/microservices-library-go/config/types v0.0.0-20250912212654-08af9e89ff53-20250912214337-08af9e89ff53
