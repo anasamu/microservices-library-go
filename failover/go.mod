@@ -9,10 +9,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-require github.com/anasamu/microservices-library-go/failover/types v0.0.0-20250912212654-08af9e89ff53
+require github.com/anasamu/microservices-library-go/failover/types v1.0.0-20250912212654-08af9e89ff53
 
-replace github.com/anasamu/microservices-library-go/failover/providers/consul => ./providers/consul
 
-replace github.com/anasamu/microservices-library-go/failover/providers/kubernetes => ./providers/kubernetes
 
-replace github.com/anasamu/microservices-library-go/failover/types => ./types

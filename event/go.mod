@@ -3,7 +3,7 @@ module github.com/anasamu/microservices-library-go/event
 go 1.21
 
 require (
-	github.com/anasamu/microservices-library-go/event/types v0.0.0-20250912212654-08af9e89ff53
+	github.com/anasamu/microservices-library-go/event/types v1.0.0
 	github.com/sirupsen/logrus v1.9.3
 )
 
