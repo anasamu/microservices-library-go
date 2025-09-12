@@ -68,4 +68,4 @@ replace github.com/anasamu/microservices-library-go/database/providers/sqlite =>
 
 replace github.com/anasamu/microservices-library-go/database/providers/cockroachdb => ../providers/cockroachdb
 
-replace github.com/anasamu/microservices-library-go/database => ..
+replace github.com/anasamu/microservices-library-go/database => ../

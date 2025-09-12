@@ -24,4 +24,4 @@ replace github.com/anasamu/microservices-library-go/monitoring/providers/prometh
 
 replace github.com/anasamu/microservices-library-go/monitoring/types => ../types
 
-replace github.com/anasamu/microservices-library-go/monitoring => ..
+replace github.com/anasamu/microservices-library-go/monitoring => ../

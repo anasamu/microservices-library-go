@@ -23,4 +23,4 @@ replace github.com/anasamu/microservices-library-go/cache/providers/redis => ../
 
 replace github.com/anasamu/microservices-library-go/cache/types => ../types
 
-replace github.com/anasamu/microservices-library-go/cache => ..
+replace github.com/anasamu/microservices-library-go/cache => ../

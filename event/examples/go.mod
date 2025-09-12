@@ -32,4 +32,4 @@ replace github.com/anasamu/microservices-library-go/event/providers/postgresql =
 
 replace github.com/anasamu/microservices-library-go/event/types => ../types
 
-replace github.com/anasamu/microservices-library-go/event => ..
+replace github.com/anasamu/microservices-library-go/event => ../

@@ -6,4 +6,4 @@ require (
 )
 
 
-replace github.com/anasamu/microservices-library-go/filegen => ..
+replace github.com/anasamu/microservices-library-go/filegen => ../

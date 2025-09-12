@@ -25,4 +25,4 @@ replace github.com/anasamu/microservices-library-go/logging/providers/file => ..
 
 replace github.com/anasamu/microservices-library-go/logging/types => ../types
 
-replace github.com/anasamu/microservices-library-go/logging => ..
+replace github.com/anasamu/microservices-library-go/logging => ../

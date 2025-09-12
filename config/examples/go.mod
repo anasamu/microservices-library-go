@@ -57,4 +57,4 @@ replace github.com/anasamu/microservices-library-go/config/providers/vault => ..
 
 replace github.com/anasamu/microservices-library-go/config/types => ../types
 
-replace github.com/anasamu/microservices-library-go/config => ..
+replace github.com/anasamu/microservices-library-go/config => ../
